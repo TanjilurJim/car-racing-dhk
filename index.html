@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DHAKA STREET RUSH - ঢাকা রেসার 3D</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Hind+Siliguri:wght@600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="canvas"></canvas>
+
+    <!-- UI Overlay during Game -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-card score-box">
+          <span class="hud-label">SCORE</span>
+          <span id="score-val" class="hud-value">0</span>
+        </div>
+        <div class="hud-card location-box">
+          <span class="hud-label">LOCATION</span>
+          <span id="location-val" class="hud-value neon-cyan">HATIRJHEEL</span>
+        </div>
+        <div class="hud-card distance-box">
+          <span class="hud-label">DISTANCE</span>
+          <span id="distance-val" class="hud-value">0.0 km</span>
+        </div>
+      </div>
+
+      <!-- Traffic Horn Alert & Quip Banner -->
+      <div id="quip-banner" class="quip-banner"></div>
+
+      <!-- Bottom HUD -->
+      <div class="hud-bottom">
+        <!-- Speedometer -->
+        <div class="speed-cluster">
+          <div class="speed-gauge">
+            <span id="speed-val" class="speed-num">0</span>
+            <span class="speed-unit">KM/H</span>
+          </div>
+          <div class="gear-display">GEAR <span id="gear-val">1</span></div>
+        </div>
+
+        <!-- Nitro CNG Boost Bar -->
+        <div class="nitro-wrapper">
+          <div class="nitro-label">
+            <span>🔥 CNG NITRO BOOST</span>
+            <span id="nitro-percent">100%</span>
+          </div>
+          <div class="nitro-bar-bg">
+            <div id="nitro-bar-fill" class="nitro-bar-fill"></div>
+          </div>
+          <div class="nitro-tip">[SHIFT] or [TAP] for TURBO</div>
+        </div>
+
+        <!-- Health / Vehicle Condition -->
+        <div class="health-wrapper">
+          <div class="health-label">
+            <span>🛠️ CAR INTEGRITY</span>
+            <span id="health-val">100%</span>
+          </div>
+          <div class="health-bar-bg">
+            <div id="health-bar-fill" class="health-bar-fill"></div>
+          </div>
+          <div class="horn-btn-hint">[SPACE / H] HONK HORN!</div>
+        </div>
+      </div>
+
+      <!-- Touch Controls (Mobile / Tablet / Mouse fallback) -->
+      <div id="touch-controls">
+        <div class="touch-left-cluster">
+          <button id="btn-left" class="touch-btn">◀</button>
+          <button id="btn-right" class="touch-btn">▶</button>
+        </div>
+        <div class="touch-center-cluster">
+          <button id="btn-horn" class="touch-btn horn-btn">📢 HONK</button>
+        </div>
+        <div class="touch-right-cluster">
+          <button id="btn-brake" class="touch-btn brake-btn">🛑 BRAKE</button>
+          <button id="btn-gas" class="touch-btn gas-btn">⚡ GAS</button>
+          <button id="btn-nitro" class="touch-btn nitro-btn">🔥 NITRO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start / Vehicle Select Screen -->
+    <div id="start-screen" class="screen-modal">
+      <div class="start-box glass-panel">
+        <div class="badge-tag">DHAKA METROPOLITAN TRAFFIC RACING</div>
+        <h1 class="game-title">DHAKA STREET RUSH</h1>
+        <h2 class="sub-title">ঢাকা স্ট্রিট রেসার : ছুটো চলো!</h2>
+        
+        <p class="flavor-text">
+          Navigate the chaotic beauty of Dhaka streets! Dodge psychedelic rickshaws, erratic green CNGs,
+          reckless local buses, and VIP motorcades under the Metro Rail viaduct!
+        </p>
+
+        <!-- Vehicle Selection Carousel -->
+        <div class="selection-container">
+          <div class="selection-header">SELECT YOUR RIDE</div>
+          <div class="vehicle-carousel">
+            <button class="nav-arrow" id="prev-car">❮</button>
+            <div class="vehicle-card" id="vehicle-card">
+              <canvas id="vehicle-preview" width="220" height="130"></canvas>
+              <div class="vehicle-info">
+                <h3 id="car-name">TOYOTA PREMIO 1.5</h3>
+                <span id="car-nickname" class="car-nickname">"The Dhaka Corporate Rocket"</span>
+                <div class="stat-row">
+                  <span>Top Speed:</span>
+                  <div class="stat-bar"><div id="stat-speed" class="stat-fill" style="width: 75%"></div></div>
+                </div>
+                <div class="stat-row">
+                  <span>Handling:</span>
+                  <div class="stat-bar"><div id="stat-handling" class="stat-fill" style="width: 80%"></div></div>
+                </div>
+                <div class="stat-row">
+                  <span>Durability:</span>
+                  <div class="stat-bar"><div id="stat-armor" class="stat-fill" style="width: 60%"></div></div>
+                </div>
+              </div>
+            </div>
+            <button class="nav-arrow" id="next-car">❯</button>
+          </div>
+        </div>
+
+        <!-- Controls Guide -->
+        <div class="instructions-panel">
+          <div class="instruction-item">
+            <span class="key-pill">▲ / W</span> Gas
+          </div>
+          <div class="instruction-item">
+            <span class="key-pill">▼ / S</span> Brake
+          </div>
+          <div class="instruction-item">
+            <span class="key-pill">◀ ▶ / A D</span> Steer
+          </div>
+          <div class="instruction-item">
+            <span class="key-pill">SPACE / H</span> Dhaka Horn (Part the traffic!)
+          </div>
+          <div class="instruction-item">
+            <span class="key-pill">SHIFT / N</span> CNG Nitro Boost
+          </div>
+        </div>
+
+        <button id="btn-start" class="btn-primary-action pulse">
+          START ENGINE (চালু করুন)
+        </button>
+
+        <div class="audio-toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="music-toggle" checked>
+            <span class="slider round"></span>
+          </label>
+          <span class="audio-label">Dhaka FM Beat & Sound FX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen-modal hidden">
+      <div class="game-over-box glass-panel">
+        <div class="crash-badge">🚨 এক্সিডেন্ট! CRASHED! 🚨</div>
+        <h2 id="crash-reason">You got sandwiched by a Local Bus!</h2>
+        <div class="quip-quote" id="crash-quip">"ভাই দেখে চালাবেন তো! ঢাকা শহর এটা!"</div>
+
+        <div class="stats-summary">
+          <div class="summary-card">
+            <span class="sum-label">FINAL SCORE</span>
+            <span id="final-score" class="sum-value gold">0</span>
+          </div>
+          <div class="summary-card">
+            <span class="sum-label">DISTANCE</span>
+            <span id="final-distance" class="sum-value">0.0 km</span>
+          </div>
+          <div class="summary-card">
+            <span class="sum-label">TOP SPEED</span>
+            <span id="final-speed" class="sum-value">0 km/h</span>
+          </div>
+          <div class="summary-card">
+            <span class="sum-label">VEHICLES HONKED</span>
+            <span id="final-honks" class="sum-value">0</span>
+          </div>
+        </div>
+
+        <div class="high-score-tag" id="high-score-tag">HIGH SCORE: 0</div>
+
+        <div class="game-over-buttons">
+          <button id="btn-restart" class="btn-primary-action">
+            TRY AGAIN (আবার খেলুন)
+          </button>
+          <button id="btn-change-car" class="btn-secondary-action">
+            GARAGE (গাড়ি বদলান)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="audio.js"></script>
+  <script src="sprites.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
+

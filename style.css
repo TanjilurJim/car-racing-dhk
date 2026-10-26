@@ -1,0 +1,713 @@
+/* =========================================================
+   DHAKA STREET RUSH - STYLESHEET
+   Neon Arcade aesthetic meets vibrant Bangladeshi city vibes
+   ========================================================= */
+
+:root {
+  --primary-gold: #ffcc00;
+  --dhaka-cng-green: #00e676;
+  --rickshaw-pink: #ff1493;
+  --bus-yellow: #ff9100;
+  --neon-cyan: #00f0ff;
+  --danger-red: #ff3344;
+  --dark-bg: #090a10;
+  --glass-bg: rgba(15, 18, 30, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: 'Orbitron', 'Hind Siliguri', -apple-system, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--dark-bg);
+  color: #fff;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* ================= HUD OVERLAY ================= */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  z-index: 10;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hud-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  padding: 10px 22px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+}
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #8fa0be;
+  margin-bottom: 2px;
+}
+
+.hud-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.neon-cyan {
+  color: var(--neon-cyan) !important;
+  text-shadow: 0 0 15px var(--neon-cyan) !important;
+}
+
+/* Quip Banner (Floating commentary in Bengali & English) */
+.quip-banner {
+  align-self: center;
+  background: rgba(255, 20, 147, 0.85);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-size: 18px;
+  letter-spacing: 1px;
+  box-shadow: 0 0 20px rgba(255, 20, 147, 0.8);
+  opacity: 0;
+  transform: translateY(-20px) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quip-banner.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* HUD Bottom cluster - distributed to corners to leave the center car area open */
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 10px;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.hud-bottom > * {
+  pointer-events: auto;
+}
+
+/* Speedometer (bottom left) */
+.speed-cluster {
+  background: var(--glass-bg);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 16px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+}
+
+.speed-gauge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.speed-num {
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+  line-height: 1;
+}
+
+.speed-unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+}
+
+.gear-display {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-gold);
+  margin-top: 4px;
+  letter-spacing: 2px;
+}
+
+/* Nitro and Health grouped at bottom corners */
+.nitro-wrapper, .health-wrapper {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  padding: 10px 16px;
+  border-radius: 14px;
+  width: 240px;
+}
+
+.nitro-label, .health-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.nitro-bar-bg, .health-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nitro-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ff9100, #ff0055, #00f0ff);
+  box-shadow: 0 0 10px #ff0055;
+  transition: width 0.1s linear;
+}
+
+.health-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #00e676, #ffcc00);
+  box-shadow: 0 0 10px #00e676;
+  transition: width 0.2s ease, background 0.3s ease;
+}
+
+.nitro-tip, .horn-btn-hint {
+  font-size: 10px;
+  color: #9cb3d3;
+  margin-top: 4px;
+  text-align: right;
+  letter-spacing: 1px;
+}
+
+/* ================= TOUCH CONTROLS ================= */
+/* Hidden by default on desktop keyboards, active on touch screens */
+#touch-controls {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  width: 100%;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 20px;
+  pointer-events: auto;
+  opacity: 0.9;
+}
+
+@media (pointer: coarse) {
+  #touch-controls {
+    display: flex;
+  }
+}
+
+.touch-left-cluster, .touch-right-cluster, .touch-center-cluster {
+  display: flex;
+  gap: 12px;
+}
+
+.touch-btn {
+  background: rgba(30, 36, 56, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 50%;
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+  font-weight: 900;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+
+.touch-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 240, 255, 0.4);
+}
+
+.horn-btn {
+  border-radius: 30px;
+  width: 110px;
+  height: 52px;
+  font-size: 14px;
+  background: rgba(255, 204, 0, 0.25);
+  border-color: var(--primary-gold);
+  color: var(--primary-gold);
+}
+
+.gas-btn {
+  background: rgba(0, 230, 118, 0.3);
+  border-color: var(--dhaka-cng-green);
+  font-size: 15px;
+}
+
+.brake-btn {
+  background: rgba(255, 51, 68, 0.3);
+  border-color: var(--danger-red);
+  font-size: 13px;
+}
+
+.nitro-btn {
+  background: rgba(255, 0, 85, 0.3);
+  border-color: #ff0055;
+  font-size: 13px;
+}
+
+/* ================= MODAL SCREENS ================= */
+.screen-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 6, 14, 0.88);
+  backdrop-filter: blur(14px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.glass-panel {
+  background: rgba(18, 22, 38, 0.95);
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 0 50px rgba(0, 240, 255, 0.25), 0 20px 40px rgba(0, 0, 0, 0.8);
+  padding: 35px 40px;
+  max-width: 680px;
+  width: 100%;
+  text-align: center;
+  animation: modalEnter 0.4s ease-out;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.badge-tag {
+  display: inline-block;
+  background: linear-gradient(90deg, #ff007f, #7928ca);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.game-title {
+  font-family: 'Bungee', cursive, sans-serif;
+  font-size: 42px;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 204, 0, 0.8), 0 4px 0 #b38600;
+  letter-spacing: 2px;
+  line-height: 1.1;
+}
+
+.sub-title {
+  font-family: 'Hind Siliguri', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.flavor-text {
+  font-size: 14px;
+  color: #b7c7e0;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+/* Car Carousel */
+.selection-container {
+  background: rgba(10, 14, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.selection-header {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--primary-gold);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.vehicle-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.nav-arrow {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.nav-arrow:hover {
+  background: var(--neon-cyan);
+  color: #000;
+  box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.vehicle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 250px;
+}
+
+#vehicle-preview {
+  margin-bottom: 8px;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+}
+
+.vehicle-info h3 {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.car-nickname {
+  font-size: 12px;
+  color: var(--primary-gold);
+  font-style: italic;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 11px;
+  color: #9cb3d3;
+  margin: 3px 0;
+  gap: 10px;
+}
+
+.stat-bar {
+  flex-grow: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  background: var(--neon-cyan);
+  border-radius: 3px;
+}
+
+/* Controls Grid */
+.instructions-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 22px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.key-pill {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-gold);
+}
+
+/* Action Buttons */
+.btn-primary-action {
+  width: 100%;
+  background: linear-gradient(135deg, #ff0055, #ff9100);
+  border: none;
+  color: #ffffff;
+  padding: 16px 30px;
+  font-size: 20px;
+  font-weight: 900;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.5);
+  letter-spacing: 1px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(255, 0, 85, 0.8);
+}
+
+.btn-secondary-action {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 14px 25px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pulse {
+  animation: pulseBtn 1.8s infinite;
+}
+
+@keyframes pulseBtn {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); box-shadow: 0 0 35px rgba(255, 0, 85, 0.7); }
+  100% { transform: scale(1); }
+}
+
+/* Audio Toggle */
+.audio-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.audio-label {
+  font-size: 13px;
+  color: #9cb3d3;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #333d52;
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--dhaka-cng-green);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* ================= GAME OVER SCREEN ================= */
+.game-over-box {
+  max-width: 580px;
+}
+
+.crash-badge {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--danger-red);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+#crash-reason {
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.quip-quote {
+  font-family: 'Hind Siliguri', sans-serif;
+  font-size: 18px;
+  color: var(--primary-gold);
+  font-style: italic;
+  margin-bottom: 24px;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background: rgba(10, 14, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.sum-label {
+  display: block;
+  font-size: 11px;
+  color: #8fa0be;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.sum-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.sum-value.gold {
+  color: var(--primary-gold);
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+}
+
+.high-score-tag {
+  font-size: 14px;
+  color: var(--neon-cyan);
+  font-weight: 800;
+  margin-bottom: 22px;
+  letter-spacing: 2px;
+}
+
+.game-over-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .game-title { font-size: 32px; }
+  .hud-top { gap: 6px; }
+  .hud-card { padding: 6px 12px; min-width: 90px; }
+  .hud-value { font-size: 18px; }
+  .speed-num { font-size: 34px; }
+  .nitro-wrapper, .health-wrapper { width: 140px; padding: 8px 12px; }
+  .touch-btn { width: 52px; height: 52px; font-size: 18px; }
+  .glass-panel { padding: 22px 18px; }
+}
+
