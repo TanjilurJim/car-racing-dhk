@@ -1,6 +1,6 @@
 /* =========================================================
-   DHAKA CITY RUSH - OPEN BLOCK STYLESHEET
-   Cyberpunk Dhaka Neon meets Open City Grid
+   DHAKA CITY 3D - TRUE 3D RACER STYLESHEET
+   Sleek Cyberpunk Dhaka Neon Aesthetic
    ========================================================= */
 
 :root {
@@ -10,9 +10,9 @@
   --bus-yellow: #ff9100;
   --neon-cyan: #00f0ff;
   --danger-red: #ff3344;
-  --dark-bg: #090a10;
-  --glass-bg: rgba(14, 18, 32, 0.88);
-  --glass-border: rgba(0, 240, 255, 0.25);
+  --dark-bg: #05070f;
+  --glass-bg: rgba(10, 14, 28, 0.88);
+  --glass-border: rgba(0, 240, 255, 0.3);
 }
 
 * {
@@ -36,18 +36,21 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
 }
 
-#canvas {
+#webgl-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+#webgl-container canvas {
+  width: 100% !important;
+  height: 100% !important;
   display: block;
 }
 
@@ -84,10 +87,10 @@ html, body {
 .hud-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   padding: 8px 18px;
-  border-radius: 12px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+  border-radius: 14px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 240, 255, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,11 +142,11 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(14, 18, 32, 0.85);
+  background: rgba(10, 14, 28, 0.88);
   border: 1px solid var(--neon-cyan);
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: 20px;
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
 }
 
 .compass-pointer {
@@ -162,14 +165,14 @@ html, body {
 /* Quip Banner */
 .quip-banner {
   align-self: center;
-  background: rgba(255, 20, 147, 0.9);
+  background: rgba(255, 20, 147, 0.92);
   color: #ffffff;
   font-weight: 700;
   padding: 8px 24px;
   border-radius: 30px;
   font-size: 16px;
   letter-spacing: 1px;
-  box-shadow: 0 0 25px rgba(255, 20, 147, 0.8);
+  box-shadow: 0 0 25px rgba(255, 20, 147, 0.85);
   opacity: 0;
   transform: translateY(-20px) scale(0.9);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -185,7 +188,7 @@ html, body {
   position: absolute;
   top: 16px;
   right: 20px;
-  background: rgba(10, 14, 26, 0.88);
+  background: rgba(10, 14, 28, 0.9);
   border: 2px solid var(--neon-cyan);
   border-radius: 16px;
   padding: 6px;
@@ -198,7 +201,7 @@ html, body {
 
 #minimap {
   border-radius: 10px;
-  background: #0f1524;
+  background: #0b111e;
   display: block;
 }
 
@@ -247,10 +250,10 @@ html, body {
 }
 
 .speed-num {
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 900;
   color: #fff;
-  text-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+  text-shadow: 0 0 18px rgba(0, 240, 255, 0.85);
   line-height: 1;
 }
 
@@ -294,9 +297,10 @@ html, body {
 }
 
 .horn-hint-pill {
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 4px 10px;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
   border-radius: 12px;
   color: var(--primary-gold);
   letter-spacing: 1px;
@@ -315,7 +319,7 @@ html, body {
   backdrop-filter: blur(10px);
   padding: 8px 14px;
   border-radius: 12px;
-  width: 220px;
+  width: 250px;
 }
 
 .nitro-label, .health-label {
@@ -324,6 +328,12 @@ html, body {
   font-size: 11px;
   font-weight: 800;
   margin-bottom: 5px;
+}
+
+.status-invincible {
+  color: #00e676;
+  font-size: 10px;
+  letter-spacing: 1px;
 }
 
 .nitro-bar-bg, .health-bar-bg {
@@ -346,9 +356,8 @@ html, body {
 .health-bar-fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, #00e676, #ffcc00);
+  background: linear-gradient(90deg, #00e676, #00f0ff);
   box-shadow: 0 0 10px #00e676;
-  transition: width 0.2s ease;
 }
 
 /* ================= TOUCH CONTROLS ================= */
@@ -377,7 +386,7 @@ html, body {
 }
 
 .touch-btn {
-  background: rgba(30, 36, 56, 0.85);
+  background: rgba(20, 26, 44, 0.88);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: #fff;
   border-radius: 50%;
@@ -442,7 +451,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(4, 6, 14, 0.9);
+  background: rgba(3, 5, 12, 0.92);
   backdrop-filter: blur(14px);
   display: flex;
   justify-content: center;
@@ -452,7 +461,7 @@ html, body {
 }
 
 .glass-panel {
-  background: rgba(18, 22, 38, 0.96);
+  background: rgba(14, 18, 34, 0.96);
   border: 2px solid rgba(0, 240, 255, 0.4);
   border-radius: 24px;
   box-shadow: 0 0 50px rgba(0, 240, 255, 0.25), 0 20px 40px rgba(0, 0, 0, 0.8);
@@ -470,7 +479,7 @@ html, body {
 
 .badge-tag {
   display: inline-block;
-  background: linear-gradient(90deg, #ff007f, #7928ca);
+  background: linear-gradient(90deg, #ff007f, #00f0ff);
   color: #fff;
   font-size: 11px;
   letter-spacing: 2px;
@@ -505,7 +514,6 @@ html, body {
   margin-bottom: 18px;
 }
 
-/* Mode Select Buttons */
 .mode-select-row {
   display: flex;
   justify-content: center;
@@ -532,9 +540,8 @@ html, body {
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
 }
 
-/* Selection Container */
 .selection-container {
-  background: rgba(10, 14, 26, 0.7);
+  background: rgba(8, 12, 22, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 14px;
@@ -627,7 +634,6 @@ html, body {
   border-radius: 3px;
 }
 
-/* Instructions Panel */
 .instructions-panel {
   display: flex;
   flex-wrap: wrap;
@@ -675,18 +681,6 @@ html, body {
 .btn-primary-action:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 40px rgba(255, 0, 85, 0.8);
-}
-
-.btn-secondary-action {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  padding: 14px 25px;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: 14px;
-  cursor: pointer;
 }
 
 .pulse {
@@ -750,83 +744,10 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* ================= GAME OVER SCREEN ================= */
-.game-over-box {
-  max-width: 560px;
-}
-
-.crash-badge {
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--danger-red);
-  letter-spacing: 2px;
-  margin-bottom: 6px;
-}
-
-#crash-reason {
-  font-size: 20px;
-  color: #fff;
-  margin-bottom: 4px;
-}
-
-.quip-quote {
-  font-family: 'Hind Siliguri', sans-serif;
-  font-size: 16px;
-  color: var(--primary-gold);
-  font-style: italic;
-  margin-bottom: 20px;
-}
-
-.stats-summary {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.summary-card {
-  background: rgba(10, 14, 26, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px;
-  border-radius: 12px;
-}
-
-.sum-label {
-  display: block;
-  font-size: 10px;
-  color: #8fa0be;
-  letter-spacing: 1px;
-  margin-bottom: 2px;
-}
-
-.sum-value {
-  font-size: 24px;
-  font-weight: 900;
-  color: #fff;
-}
-
-.sum-value.gold {
-  color: var(--primary-gold);
-}
-
-.high-score-tag {
-  font-size: 13px;
-  color: var(--neon-cyan);
-  font-weight: 800;
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-}
-
-.game-over-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 @media (max-width: 768px) {
   #minimap-container { top: auto; bottom: 85px; right: 10px; }
   #minimap { width: 110px; height: 110px; }
-  .game-title { font-size: 30px; }
+  .game-title { font-size: 28px; }
   .hud-top { gap: 6px; }
   .hud-card { padding: 6px 10px; min-width: 80px; }
   .hud-value { font-size: 16px; }

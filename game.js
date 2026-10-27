@@ -1,115 +1,115 @@
 /**
- * DHAKA CITY RUSH - OPEN BLOCK RACING ENGINE
- * 360-degree city block driving with intersections, roundabouts (Shapla Chottor),
- * Metro Rail viaduct, 2.5D extruded buildings, dynamic tire skid marks, and traffic AI.
+ * DHAKA CITY 3D - MAIN GAME CONTROLLER (Three.js WebGL)
+ * True 3D Chase-Camera Racing across Dhaka City Blocks with Indestructible Car (No Damage Cap).
  */
 
 (function () {
   'use strict';
 
-  // Car definitions
   const CARS = [
     {
       id: 'premio',
       name: 'TOYOTA PREMIO 1.5',
       nickname: '"The Dhaka Corporate Rocket"',
-      sprite: 'player_premio',
-      maxSpeed: 14.5,
-      accel: 0.22,
-      turnRate: 0.052,
-      driftFactor: 0.92,
-      durability: 100,
-      nitroPower: 1.45,
-      scale: 1.0
+      modelType: 'premio',
+      maxSpeed: 45,
+      accel: 28,
+      turnRate: 2.2,
+      driftFactor: 0.88,
+      nitroPower: 1.5
     },
     {
       id: 'taxi',
       name: 'YELLOW DHAKA CAB',
       nickname: '"Meter Chara Jabo Na"',
-      sprite: 'player_taxi',
-      maxSpeed: 14.0,
-      accel: 0.24,
-      turnRate: 0.058,
-      driftFactor: 0.94,
-      durability: 85,
-      nitroPower: 1.4,
-      scale: 1.0
+      modelType: 'taxi',
+      maxSpeed: 43,
+      accel: 30,
+      turnRate: 2.5,
+      driftFactor: 0.90,
+      nitroPower: 1.45
     },
     {
       id: 'suv',
       name: 'VIP BLACK SUV (PRADO)',
       nickname: '"Wrong Side King with Siren"',
-      sprite: 'player_suv',
-      maxSpeed: 13.8,
-      accel: 0.18,
-      turnRate: 0.044,
-      driftFactor: 0.88,
-      durability: 160,
-      nitroPower: 1.35,
-      scale: 1.08
+      modelType: 'suv',
+      maxSpeed: 42,
+      accel: 24,
+      turnRate: 1.9,
+      driftFactor: 0.82,
+      nitroPower: 1.4
     },
     {
       id: 'cng',
       name: 'MODIFIED TURBO CNG',
       nickname: '"The 3-Wheeled Green Demon"',
-      sprite: 'player_cng',
-      maxSpeed: 15.5,
-      accel: 0.28,
-      turnRate: 0.068,
-      driftFactor: 0.96,
-      durability: 60,
-      nitroPower: 1.6,
-      scale: 1.05
+      modelType: 'cng',
+      maxSpeed: 48,
+      accel: 34,
+      turnRate: 2.9,
+      driftFactor: 0.94,
+      nitroPower: 1.6
     }
   ];
 
   const QUIPS = [
     'মামা ডানে কাটেন! মোড়ে ফাঁকা আছে! (Turn right, the intersection is clear!)',
     'রিকশাওয়ালা মামা সাইড দিন! (Uncle rickshaw, move aside!)',
-    'শাপলা চত্বরের গোলচক্করে সুন্দর ড্রিফট! (Sweet drift around Shapla Chottor!)',
-    'মেট্রোরেলের নিচে স্পীড রান! (Speeding under the Metro Rail!)',
-    'পুরান ঢাকার গলিতে ঢুকে পড়লেন! (Entered Old Dhaka alleys!)',
-    'CNG মামা নো সিগন্যালে মোড় নিলো! (CNG turning without signal!)',
-    'যাত্রী সময়মতো পৌঁছালো! বকশিস পেলেন! (Delivered passenger on time! Got a tip!)',
-    'হর্ন দিলেন, ট্রাফিক সাইড দিলো! (Honked loud and cleared the street!)'
+    'শাপলা চত্বরের গোলচক্করে সুন্দর থ্রিডি ড্রিফট! (Sweet 3D drift around Shapla Chottor!)',
+    'মেট্রোরেলের নিচে ১২০ কিমি গতিতে ছুটছেন! (Speeding under the Metro Rail!)',
+    'পুরান ঢাকার গলিতে ফুল স্পীড টার্ন! (High-speed turn in Old Dhaka!)',
+    'হর্ন দিলেন, ট্রাফিক সাইড দিলো! (Honked loud, cleared the road!)',
+    'গাড়ি শক্তিশালী! কোনো ড্যামেজ নেই! (Car is indestructible! Keep rolling!)'
   ];
 
-  class DhakaCityGame {
+  class DhakaCity3DGame {
     constructor() {
-      this.canvas = document.getElementById('canvas');
-      this.ctx = this.canvas.getContext('2d');
-
-      this.minimapCanvas = document.getElementById('minimap');
-      this.miniCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
-
       this.selectedCarIndex = 0;
-      this.gameMode = 'FREE'; // 'FREE' or 'TAXI'
+      this.cameraMode = 'CHASE'; // 'CHASE' or 'HOOD'
 
-      // Player State
-      this.x = 1200; // Start on Kazi Nazrul Islam Ave
-      this.y = 800;
-      this.angle = -Math.PI / 2; // Facing North
+      // Three.js Core
+      this.container = document.getElementById('webgl-container');
+      this.scene = null;
+      this.camera = null;
+      this.renderer = null;
+
+      // Minimap Canvas
+      this.miniCanvas = document.getElementById('minimap');
+      this.miniCtx = this.miniCanvas ? this.miniCanvas.getContext('2d') : null;
+
+      // Player Vehicle State
+      this.playerMesh = null;
+      this.x = -100; // Start on Kazi Nazrul Islam Ave
+      this.z = 20;
+      this.angle = 0; // Heading in radians
       this.speed = 0;
-      this.angularVelocity = 0;
+      this.steerAngle = 0;
       this.vx = 0;
-      this.vy = 0;
+      this.vz = 0;
 
+      // Invincible / No Damage Cap
       this.nitro = 100;
       this.nitroActive = false;
-      this.health = 100;
-      this.maxHealth = 100;
       this.score = 0;
       this.topSpeedRecord = 0;
       this.jobsCompleted = 0;
       this.honkCount = 0;
 
-      // Camera State
-      this.camX = this.x;
-      this.camY = this.y;
-      this.camAngle = this.angle;
-      this.zoom = 1.0;
+      // Camera Smooth Follow
+      this.camPos = new THREE.Vector3(this.x, 6, this.z - 14);
+      this.camTarget = new THREE.Vector3(this.x, 1.5, this.z);
 
-      // Keys Input
+      // Traffic Vehicles
+      this.traffic = [];
+
+      // Particle Systems (Nitro flames, tire smoke, sparks)
+      this.particles = [];
+
+      // Missions
+      this.currentMission = null;
+
+      // Input keys
       this.keys = {
         forward: false,
         backward: false,
@@ -120,43 +120,71 @@
         nitro: false
       };
 
-      // Environmental FX
-      this.skidMarks = [];
-      this.particles = [];
-      this.traffic = [];
-
-      // Mission / Waypoint System
-      this.currentMission = null;
-      this.missionTimer = 0;
-
-      // Metro Rail overhead train
-      this.metroTrain = {
-        active: true,
-        y: 0,
-        speed: 12
-      };
-
       this.gameState = 'START';
-      this.lastFrameTime = performance.now();
+      this.lastTime = performance.now();
 
+      this.initThree();
       this.setupDOM();
       this.setupControls();
-      this.resizeCanvas();
-      window.addEventListener('resize', () => this.resizeCanvas());
 
-      Sprites.init();
-      CityMap.init();
-      this.spawnInitialTraffic();
-      this.renderCarPreview();
-
-      // Start loop
+      // Start render loop
       requestAnimationFrame((t) => this.loop(t));
+    }
+
+    initThree() {
+      // Scene
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x070b16);
+      this.scene.fog = new THREE.FogExp2(0x070b16, 0.0035);
+
+      // Camera (Perspective, FOV 60)
+      const aspect = window.innerWidth / window.innerHeight;
+      this.camera = new THREE.PerspectiveCamera(60, aspect, 0.5, 1200);
+
+      // Renderer
+      this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.container.appendChild(this.renderer.domElement);
+
+      // Lighting: Dusk / Evening Dhaka Atmosphere
+      const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x080820, 0.65);
+      this.scene.add(hemiLight);
+
+      // Warm Directional Sun/Moon light
+      this.dirLight = new THREE.DirectionalLight(0xffa726, 0.85);
+      this.dirLight.position.set(120, 160, 90);
+      this.dirLight.castShadow = true;
+      this.dirLight.shadow.mapSize.width = 2048;
+      this.dirLight.shadow.mapSize.height = 2048;
+      this.dirLight.shadow.camera.near = 10;
+      this.dirLight.shadow.camera.far = 400;
+      const d = 140;
+      this.dirLight.shadow.camera.left = -d;
+      this.dirLight.shadow.camera.right = d;
+      this.dirLight.shadow.camera.top = d;
+      this.dirLight.shadow.camera.bottom = -d;
+      this.scene.add(this.dirLight);
+
+      // Build 3D City
+      City3D.build(this.scene);
+
+      // Spawn 3D Traffic
+      this.spawn3DTraffic();
+
+      // Window resize
+      window.addEventListener('resize', () => {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
     }
 
     setupDOM() {
       this.hud = document.getElementById('hud');
       this.startScreen = document.getElementById('start-screen');
-      this.gameOverScreen = document.getElementById('game-over-screen');
 
       // Top HUD
       this.scoreVal = document.getElementById('score-val');
@@ -175,17 +203,21 @@
       this.gearVal = document.getElementById('gear-val');
       this.nitroPercent = document.getElementById('nitro-percent');
       this.nitroBarFill = document.getElementById('nitro-bar-fill');
-      this.healthVal = document.getElementById('health-val');
-      this.healthBarFill = document.getElementById('health-bar-fill');
 
-      // Buttons
+      // Carousel
+      this.carName = document.getElementById('car-name');
+      this.carNickname = document.getElementById('car-nickname');
+      this.statSpeed = document.getElementById('stat-speed');
+      this.statHandling = document.getElementById('stat-handling');
+      this.statArmor = document.getElementById('stat-armor');
+      this.previewCanvas = document.getElementById('vehicle-preview');
+      this.previewCtx = this.previewCanvas.getContext('2d');
+
       document.getElementById('prev-car').onclick = () => this.changeCar(-1);
       document.getElementById('next-car').onclick = () => this.changeCar(1);
       document.getElementById('btn-start').onclick = () => this.startGame();
-      document.getElementById('btn-restart').onclick = () => this.startGame();
-      document.getElementById('btn-change-car').onclick = () => this.showStartScreen();
 
-      // Taxi Job toggle button
+      // Taxi Job button
       document.getElementById('btn-job').onclick = () => {
         if (!this.currentMission) {
           this.startNewTaxiMission();
@@ -194,34 +226,13 @@
         }
       };
 
-      // Mode select buttons in start screen
-      const modeFree = document.getElementById('mode-free');
-      const modeTaxi = document.getElementById('mode-taxi');
-      modeFree.onclick = () => {
-        this.gameMode = 'FREE';
-        modeFree.classList.add('active');
-        modeTaxi.classList.remove('active');
-      };
-      modeTaxi.onclick = () => {
-        this.gameMode = 'TAXI';
-        modeTaxi.classList.add('active');
-        modeFree.classList.remove('active');
-      };
-
-      // Music toggle
+      // Audio toggle
       const musicToggle = document.getElementById('music-toggle');
       musicToggle.onchange = (e) => {
         window.soundEngine.toggle(e.target.checked);
       };
 
-      // Car preview elements
-      this.carName = document.getElementById('car-name');
-      this.carNickname = document.getElementById('car-nickname');
-      this.statSpeed = document.getElementById('stat-speed');
-      this.statHandling = document.getElementById('stat-handling');
-      this.statArmor = document.getElementById('stat-armor');
-      this.previewCanvas = document.getElementById('vehicle-preview');
-      this.previewCtx = this.previewCanvas.getContext('2d');
+      this.updateCarPreview();
     }
 
     setupControls() {
@@ -242,6 +253,10 @@
         }
         if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyN') {
           this.keys.nitro = true;
+        }
+        if (e.code === 'KeyC') {
+          this.cameraMode = this.cameraMode === 'CHASE' ? 'HOOD' : 'CHASE';
+          this.showQuip(`Camera switched to ${this.cameraMode} View! 🎥`);
         }
       });
 
@@ -285,47 +300,43 @@
       bindTouch('btn-horn', 'horn', () => this.triggerHorn());
     }
 
-    resizeCanvas() {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
-    }
-
     changeCar(delta) {
       this.selectedCarIndex = (this.selectedCarIndex + delta + CARS.length) % CARS.length;
-      this.renderCarPreview();
+      this.updateCarPreview();
       window.soundEngine.init();
       window.soundEngine.playRickshawBell();
     }
 
-    renderCarPreview() {
+    updateCarPreview() {
       const car = CARS[this.selectedCarIndex];
       this.carName.textContent = car.name;
       this.carNickname.textContent = car.nickname;
-      this.statSpeed.style.width = (car.maxSpeed / 16.0 * 100) + '%';
-      this.statHandling.style.width = (car.turnRate / 0.07 * 100) + '%';
-      this.statArmor.style.width = (car.durability / 160 * 100) + '%';
+      this.statSpeed.style.width = (car.maxSpeed / 50 * 100) + '%';
+      this.statHandling.style.width = (car.turnRate / 3.0 * 100) + '%';
+      this.statArmor.style.width = '100%';
 
+      // 2D Preview Drawing
+      const ctx = this.previewCtx;
       const pw = this.previewCanvas.width;
       const ph = this.previewCanvas.height;
-      this.previewCtx.clearRect(0, 0, pw, ph);
+      ctx.clearRect(0, 0, pw, ph);
 
-      const sprite = Sprites.cache[car.sprite];
-      if (sprite) {
-        this.previewCtx.save();
-        this.previewCtx.translate(pw / 2, ph / 2);
-        this.previewCtx.rotate(-Math.PI / 6);
-        this.previewCtx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
-        this.previewCtx.restore();
-      }
-    }
+      // Draw stylized car preview
+      ctx.fillStyle = car.id === 'taxi' ? '#ffcc00' : (car.id === 'cng' ? '#00e676' : (car.id === 'suv' ? '#222' : '#f8fafc'));
+      ctx.beginPath();
+      ctx.roundRect(pw / 2 - 45, ph / 2 - 20, 90, 40, 10);
+      ctx.fill();
 
-    showStartScreen() {
-      this.gameState = 'START';
-      this.startScreen.classList.remove('hidden');
-      this.gameOverScreen.classList.add('hidden');
-      this.hud.classList.add('hidden');
-      window.soundEngine.stopEngine();
-      window.soundEngine.stopMusic();
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(pw / 2 - 25, ph / 2 - 16, 50, 32);
+
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(pw / 2 - 47, ph / 2 - 14, 4, 8);
+      ctx.fillRect(pw / 2 - 47, ph / 2 + 6, 4, 8);
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(pw / 2 + 43, ph / 2 - 14, 4, 8);
+      ctx.fillRect(pw / 2 + 43, ph / 2 + 6, 4, 8);
     }
 
     startGame() {
@@ -333,150 +344,191 @@
       window.soundEngine.resume();
       window.soundEngine.startMusic();
 
+      // Create / swap player 3D car mesh
+      if (this.playerMesh) {
+        this.scene.remove(this.playerMesh);
+      }
+
       const car = CARS[this.selectedCarIndex];
-      this.maxHealth = car.durability;
-      this.health = this.maxHealth;
-      this.nitro = 100;
+      if (car.modelType === 'cng') {
+        this.playerMesh = Models3D.createCngModel(true);
+      } else {
+        this.playerMesh = Models3D.createCarModel(car.modelType);
+      }
+      this.scene.add(this.playerMesh);
+
+      // Reset state
+      this.x = -100; // on Kazi Nazrul Islam Ave
+      this.z = 20;
+      this.angle = 0; // facing along street
       this.speed = 0;
-      this.angularVelocity = 0;
+      this.steerAngle = 0;
       this.vx = 0;
-      this.vy = 0;
+      this.vz = 0;
+      this.nitro = 100;
       this.score = 0;
-      this.jobsCompleted = 0;
       this.honkCount = 0;
-      this.topSpeedRecord = 0;
-
-      // Start on Kazi Nazrul Islam Ave
-      this.x = 1200;
-      this.y = 800;
-      this.angle = -Math.PI / 2;
-      this.camX = this.x;
-      this.camY = this.y;
-      this.camAngle = this.angle;
-
-      this.skidMarks = [];
-      this.particles = [];
+      this.jobsCompleted = 0;
 
       this.gameState = 'PLAYING';
       this.startScreen.classList.add('hidden');
-      this.gameOverScreen.classList.add('hidden');
       this.hud.classList.remove('hidden');
 
-      if (this.gameMode === 'TAXI') {
-        this.startNewTaxiMission();
-      } else {
-        this.currentMission = null;
-        this.navCompass.classList.add('hidden');
-        document.getElementById('btn-job').textContent = '🚖 START TAXI JOB';
-        this.showQuip('ঢাকা শহরে স্বাগতম! ঘুরে বেড়ান অথবা ট্যাক্সি চালান! 🚗');
-      }
+      this.showQuip('৩ডি ঢাকা শহরে যাত্রা শুরু! কোনো ড্যামেজ নেই — ফুল স্পীডে ছুটুন! 🏎️');
     }
 
     // ==========================================
-    // TRAFFIC AI SYSTEM
+    // 3D TRAFFIC SYSTEM
     // ==========================================
-    spawnInitialTraffic() {
+    spawn3DTraffic() {
       this.traffic = [];
-      const types = [
-        { sprite: 'traffic_rickshaw', speed: 1.8, radius: 18, name: 'Rickshaw' },
-        { sprite: 'traffic_cng', speed: 4.8, radius: 20, name: 'CNG' },
-        { sprite: 'traffic_bus_shikhor', speed: 6.2, radius: 36, name: 'Bus' },
-        { sprite: 'traffic_bus_balaka', speed: 6.5, radius: 36, name: 'Bus' },
-        { sprite: 'traffic_bus_bikolpo', speed: 5.8, radius: 36, name: 'Bus' }
-      ];
 
-      // Spawn traffic along avenues and streets
-      CityMap.trafficNodes.forEach(node => {
-        const count = node.type === 'avenue' ? 3 : 2;
-        for (let i = 0; i < count; i++) {
-          const tType = types[Math.floor(Math.random() * types.length)];
-          const progress = (i + 0.3 + Math.random() * 0.4) / count;
-          const x = node.x1 + (node.x2 - node.x1) * progress;
-          const y = node.y1 + (node.y2 - node.y1) * progress;
+      // Avenues traffic
+      City3D.avenues.forEach(ave => {
+        // 2 cars northbound, 2 cars southbound
+        [-1, 1].forEach(dir => {
+          for (let i = 0; i < 2; i++) {
+            const laneX = ave.x + (dir * ave.width * 0.25);
+            const z = (i * 260) - 200 + (Math.random() * 60 - 30);
+
+            // Alternate Rickshaw, CNG, Bus
+            let mesh, type, speed;
+            const rand = Math.random();
+            if (rand < 0.4) {
+              mesh = Models3D.createRickshawModel();
+              type = 'Rickshaw';
+              speed = 5.5;
+            } else if (rand < 0.75) {
+              mesh = Models3D.createCngModel(false);
+              type = 'CNG';
+              speed = 13.0;
+            } else {
+              mesh = Models3D.createBusModel('shikhor');
+              type = 'Bus';
+              speed = 17.0;
+            }
+
+            mesh.position.set(laneX, 0, z);
+            mesh.rotation.y = dir > 0 ? 0 : Math.PI;
+            this.scene.add(mesh);
+
+            this.traffic.push({
+              mesh: mesh,
+              x: laneX,
+              z: z,
+              dirZ: dir,
+              dirX: 0,
+              isAvenue: true,
+              street: ave,
+              speed: speed,
+              baseSpeed: speed,
+              type: type,
+              radius: type === 'Bus' ? 4.0 : 1.6,
+              honkedTimer: 0
+            });
+          }
+        });
+      });
+
+      // Streets traffic
+      City3D.streets.forEach(str => {
+        [-1, 1].forEach(dir => {
+          const laneZ = str.z + (dir * str.width * 0.25);
+          const x = (Math.random() * 400 - 200);
+
+          const mesh = Math.random() < 0.5 ? Models3D.createCngModel(false) : Models3D.createBusModel('balaka');
+          const type = mesh.children.length > 8 ? 'Bus' : 'CNG';
+          const speed = type === 'Bus' ? 17.0 : 13.0;
+
+          mesh.position.set(x, 0, laneZ);
+          mesh.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          this.scene.add(mesh);
 
           this.traffic.push({
-            x, y,
-            angle: node.angle,
-            speed: tType.speed + (Math.random() * 0.6 - 0.3),
-            baseSpeed: tType.speed,
-            sprite: Sprites.cache[tType.sprite],
-            radius: tType.radius,
-            type: tType.name,
-            node: node,
+            mesh: mesh,
+            x: x,
+            z: laneZ,
+            dirZ: 0,
+            dirX: dir,
+            isAvenue: false,
+            street: str,
+            speed: speed,
+            baseSpeed: speed,
+            type: type,
+            radius: type === 'Bus' ? 4.0 : 1.6,
             honkedTimer: 0
           });
-        }
+        });
       });
     }
 
     updateTraffic(dt) {
       this.traffic.forEach(car => {
-        // Honked scared swerving
         if (car.honkedTimer > 0) {
           car.honkedTimer -= dt;
-          car.speed = Math.max(0.5, car.baseSpeed * 0.5);
+          car.speed = car.baseSpeed * 0.4;
         } else {
           car.speed = car.baseSpeed;
         }
 
-        // Advance along street
-        car.x += Math.cos(car.angle) * car.speed * 60 * dt;
-        car.y += Math.sin(car.angle) * car.speed * 60 * dt;
+        if (car.isAvenue) {
+          car.z += car.dirZ * car.speed * dt;
+          if (car.z > 550) car.z = -550;
+          if (car.z < -550) car.z = 550;
+        } else {
+          car.x += car.dirX * car.speed * dt;
+          if (car.x > 550) car.x = -550;
+          if (car.x < -550) car.x = 550;
+        }
 
-        // Loop around at world boundaries
-        if (car.x < 30) car.x = CityMap.WORLD_SIZE - 50;
-        if (car.x > CityMap.WORLD_SIZE - 30) car.x = 50;
-        if (car.y < 30) car.y = CityMap.WORLD_SIZE - 50;
-        if (car.y > CityMap.WORLD_SIZE - 30) car.y = 50;
+        car.mesh.position.set(car.x, 0, car.z);
+
+        // Spin wheels
+        if (car.mesh.wheels) {
+          car.mesh.wheels.forEach(w => w.rotation.x += car.speed * dt * 2.0);
+        }
 
         // Collision with player
-        const dist = Math.hypot(this.x - car.x, this.y - car.y);
-        if (dist < car.radius + 18) {
-          this.handleVehicleCollision(car);
+        const dist = Math.hypot(this.x - car.x, this.z - car.z);
+        if (dist < car.radius + 1.8) {
+          this.handleCrash(car.x, car.z, car.type);
         }
       });
     }
 
-    handleVehicleCollision(car) {
+    // ==========================================
+    // CRASH HANDLER (NO DAMAGE CAP — INDESTRUCTIBLE)
+    // ==========================================
+    handleCrash(otherX, otherZ, otherName = 'Obstacle') {
       window.soundEngine.playCrash();
 
-      const pushX = (this.x - car.x) / (Math.hypot(this.x - car.x, this.y - car.y) || 1);
-      const pushY = (this.y - car.y) / (Math.hypot(this.x - car.x, this.y - car.y) || 1);
+      const dx = this.x - otherX;
+      const dz = this.z - otherZ;
+      const len = Math.hypot(dx, dz) || 1;
+      const nx = dx / len;
+      const nz = dz / len;
 
-      this.vx += pushX * 3.5;
-      this.vy += pushY * 3.5;
-      this.speed *= 0.3;
+      // Realistic physical rebound impulse
+      this.vx += nx * 14;
+      this.vz += nz * 14;
+      this.speed *= -0.3;
 
-      let damage = 20;
-      if (car.type === 'Bus') {
-        damage = 38;
-        this.showQuip('🚨 বাসের সাথে মারাত্মক সংঘর্ষ!');
-      } else if (car.type === 'Rickshaw') {
-        damage = 10;
-        this.showQuip('⚠️ রিকশায় ধাক্কা লাগলো!');
-      } else {
-        damage = 18;
-        this.showQuip('💥 সিএনজির সাথে ঠোকাঠুকি!');
+      // Spawn bright spark particles
+      for (let i = 0; i < 18; i++) {
+        this.spawnParticle(this.x + nx * 1.5, 1.2, this.z + nz * 1.5, [0xffcc00, 0xff0055, 0xffffff]);
       }
 
-      this.health = Math.max(0, this.health - damage);
-
-      // Spawn collision spark particles
-      for (let i = 0; i < 15; i++) {
-        this.particles.push({
-          x: (this.x + car.x) / 2,
-          y: (this.y + car.y) / 2,
-          vx: (Math.random() - 0.5) * 8,
-          vy: (Math.random() - 0.5) * 8,
-          life: 0.35,
-          maxLife: 0.35,
-          color: ['#ffcc00', '#ff0055', '#ffffff'][Math.floor(Math.random() * 3)]
-        });
+      if (otherName === 'Bus') {
+        this.showQuip('💥 বাসের সাথে ধাক্কা! নো প্রবলেম, গাড়ি বুলেটপ্রুফ!');
+      } else if (otherName === 'Building') {
+        this.showQuip('🚨 দেয়ালে ক্র্যাশ! বাউন্স করে ফুল স্পীডে ছুটুন!');
+      } else {
+        this.showQuip('⚠️ ট্রাফিকের সাথে ধাক্কা লাগলো! গাড়ি অক্ষত!');
       }
     }
 
     // ==========================================
-    // HORN MECHANIC (Clears traffic onto sidewalks)
+    // HORN MECHANIC
     // ==========================================
     triggerHorn() {
       window.soundEngine.playPlayerHorn();
@@ -484,17 +536,19 @@
 
       let count = 0;
       this.traffic.forEach(car => {
-        const dist = Math.hypot(this.x - car.x, this.y - car.y);
-        if (dist < 260) {
-          car.honkedTimer = 3.0;
+        const dist = Math.hypot(this.x - car.x, this.z - car.z);
+        if (dist < 45) {
+          car.honkedTimer = 3.5;
           count++;
-          // Shift away from player
+
           if (car.type === 'Rickshaw') {
             window.soundEngine.playRickshawBell();
-            car.x += (car.x > this.x ? 25 : -25);
+            if (car.isAvenue) car.x += (car.x > this.x ? 4 : -4);
+            else car.z += (car.z > this.z ? 4 : -4);
           } else if (car.type === 'CNG') {
             window.soundEngine.playCngSputter();
-            car.y += (car.y > this.y ? 25 : -25);
+            if (car.isAvenue) car.x += (car.x > this.x ? 3 : -3);
+            else car.z += (car.z > this.z ? 3 : -3);
           } else {
             window.soundEngine.playBusHorn();
           }
@@ -502,8 +556,8 @@
       });
 
       if (count > 0) {
-        this.score += count * 60;
-        this.showQuip(`📢 হর্ন শুনে ${count}টি গাড়ি সাইড দিলো! (+${count * 60} pts)`);
+        this.score += count * 75;
+        this.showQuip(`📢 হর্ন শুনে ${count}টি গাড়ি সাইড দিলো! (+${count * 75} pts)`);
       }
     }
 
@@ -513,31 +567,31 @@
       if (this.quipTimeout) clearTimeout(this.quipTimeout);
       this.quipTimeout = setTimeout(() => {
         this.quipBanner.classList.remove('show');
-      }, 2600);
+      }, 2800);
     }
 
     // ==========================================
-    // TAXI / CHAI DELIVERY MISSION SYSTEM
+    // TAXI / CHAI DELIVERY MISSIONS
     // ==========================================
     startNewTaxiMission() {
-      const dest = CityMap.destinations[Math.floor(Math.random() * CityMap.destinations.length)];
+      const dest = City3D.destinations[Math.floor(Math.random() * City3D.destinations.length)];
       this.currentMission = {
         dest: dest,
-        timeLeft: 60, // seconds
+        timeLeft: 60,
         reward: dest.reward
       };
 
       this.navCompass.classList.remove('hidden');
       document.getElementById('btn-job').textContent = '❌ CANCEL JOB';
       this.missionSubtext.textContent = `Destination: ${dest.name} (${dest.bangla})`;
-      this.showQuip(`নতুন ট্রিপ: ${dest.bangla} পৌঁছান! ⏱️`);
+      this.showQuip(`নতুন ট্রিপ: ${dest.bangla} যাত্রী পৌঁছান! ⏱️`);
     }
 
     cancelMission() {
       this.currentMission = null;
       this.navCompass.classList.add('hidden');
       document.getElementById('btn-job').textContent = '🚖 START TAXI JOB';
-      this.missionSubtext.textContent = 'Free Roaming the City';
+      this.missionSubtext.textContent = 'Free Roaming 3D Dhaka (Invincible Mode 🛡️)';
       this.timeVal.textContent = '--:--';
     }
 
@@ -549,28 +603,25 @@
       const s = Math.floor(Math.max(0, this.currentMission.timeLeft) % 60);
       this.timeVal.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
 
-      // Check arrival at waypoint
       const dx = this.currentMission.dest.x - this.x;
-      const dy = this.currentMission.dest.y - this.y;
-      const dist = Math.hypot(dx, dy);
+      const dz = this.currentMission.dest.z - this.z;
+      const dist = Math.hypot(dx, dz);
 
-      // Update Compass Arrow
-      const targetAngle = Math.atan2(dy, dx);
-      const relAngle = targetAngle - this.angle - Math.PI / 2;
+      // Compass pointer angle
+      const targetAngle = Math.atan2(dx, dz);
+      const relAngle = targetAngle - this.angle;
       this.compassArrow.style.transform = `rotate(${relAngle}rad)`;
-      this.compassDist.textContent = `${Math.round(dist / 5)}m`;
+      this.compassDist.textContent = `${Math.round(dist * 3)}m`;
 
-      if (dist < 65) {
-        // Mission Completed!
+      if (dist < 18) {
+        // Arrived at destination!
         window.soundEngine.playChaiPickup();
         const earned = this.currentMission.reward + Math.round(this.currentMission.timeLeft * 10);
         this.score += earned;
         this.jobsCompleted++;
-        this.health = Math.min(this.maxHealth, this.health + 30);
         this.nitro = 100;
-
-        this.showQuip(`🎉 গন্তব্যে সফল ড্রপ! +${earned} টাকা ভাড়া পেলেন!`);
-        this.startNewTaxiMission(); // Continue to next passenger
+        this.showQuip(`🎉 গন্তব্যে পৌঁছালেন! +${earned} টাকা ভাড়া পেলেন!`);
+        this.startNewTaxiMission();
       } else if (this.currentMission.timeLeft <= 0) {
         this.showQuip('⏰ সময় শেষ! যাত্রী অন্য রিকশায় চলে গেলো!');
         this.cancelMission();
@@ -578,7 +629,7 @@
     }
 
     // ==========================================
-    // VEHICLE PHYSICS & INPUT
+    // VEHICLE PHYSICS & UPDATE
     // ==========================================
     update(dt) {
       if (this.gameState !== 'PLAYING') return;
@@ -589,126 +640,101 @@
       const turnRate = car.turnRate;
 
       // Nitro management
-      if (this.keys.nitro && this.nitro > 0 && Math.abs(this.speed) > 2) {
+      if (this.keys.nitro && this.nitro > 0 && Math.abs(this.speed) > 5) {
         this.nitroActive = true;
-        this.nitro = Math.max(0, this.nitro - dt * 32);
+        this.nitro = Math.max(0, this.nitro - dt * 30);
         window.soundEngine.playNitroSound();
 
-        // Spawn flame particles from rear exhaust
-        const rearX = this.x - Math.cos(this.angle) * 32;
-        const rearY = this.y - Math.sin(this.angle) * 32;
-        for (let i = 0; i < 3; i++) {
-          this.particles.push({
-            x: rearX,
-            y: rearY,
-            vx: -Math.cos(this.angle) * (Math.random() * 4 + 3) + (Math.random() - 0.5) * 2,
-            vy: -Math.sin(this.angle) * (Math.random() * 4 + 3) + (Math.random() - 0.5) * 2,
-            life: 0.3,
-            maxLife: 0.3,
-            color: ['#00f0ff', '#ff0055', '#ff9900'][Math.floor(Math.random() * 3)]
-          });
-        }
+        // Spawn 3D blue flame particles behind car
+        const flameZ = this.z - Math.cos(this.angle) * 2.8;
+        const flameX = this.x - Math.sin(this.angle) * 2.8;
+        this.spawnParticle(flameX, 0.6, flameZ, [0x00f0ff, 0xff0055, 0xff9900]);
       } else {
         this.nitroActive = false;
-        this.nitro = Math.min(100, this.nitro + dt * 6);
+        this.nitro = Math.min(100, this.nitro + dt * 8);
       }
 
       const effectiveMaxSpeed = maxSpeed * (this.nitroActive ? car.nitroPower : 1.0);
 
       // Gas / Brake / Reverse
       if (this.keys.forward) {
-        this.speed = Math.min(effectiveMaxSpeed, this.speed + accel * 60 * dt * (this.nitroActive ? 1.6 : 1.0));
+        this.speed = Math.min(effectiveMaxSpeed, this.speed + accel * dt * (this.nitroActive ? 1.8 : 1.0));
       } else if (this.keys.backward) {
-        this.speed = Math.max(-maxSpeed * 0.45, this.speed - accel * 1.5 * 60 * dt);
+        this.speed = Math.max(-maxSpeed * 0.4, this.speed - accel * 1.6 * dt);
       } else {
-        // Coasting friction
         this.speed *= Math.pow(0.96, dt * 60);
       }
 
-      // Steering
-      const speedRatio = Math.min(1.0, Math.abs(this.speed) / (maxSpeed * 0.6));
-      let currentTurn = turnRate * (0.4 + speedRatio * 0.6);
+      // Steering with wheel angle
+      const targetSteer = (this.keys.left ? 0.5 : 0) - (this.keys.right ? 0.5 : 0);
+      this.steerAngle += (targetSteer - this.steerAngle) * 0.2;
 
-      if (this.keys.drift) {
-        currentTurn *= 1.45; // sharper turn during drift
+      // Visibly turn 3D front wheels
+      if (this.playerMesh && this.playerMesh.frontWheels) {
+        this.playerMesh.frontWheels.forEach(w => w.rotation.y = this.steerAngle);
       }
 
-      if (this.keys.left) {
-        this.angle -= currentTurn * (this.speed >= 0 ? 1 : -1) * 60 * dt;
-      }
-      if (this.keys.right) {
-        this.angle += currentTurn * (this.speed >= 0 ? 1 : -1) * 60 * dt;
-      }
+      // Apply yaw rotation
+      let currentTurn = turnRate * (this.keys.drift ? 1.5 : 1.0);
+      const speedRatio = Math.min(1.0, Math.abs(this.speed) / (maxSpeed * 0.4));
+      this.angle += this.steerAngle * currentTurn * speedRatio * dt * (this.speed >= 0 ? 1 : -1);
 
-      // Drift physics (lateral grip vs sliding)
-      const forwardX = Math.cos(this.angle);
-      const forwardY = Math.sin(this.angle);
+      // Drift & Lateral grip
+      const forwardX = Math.sin(this.angle);
+      const forwardZ = Math.cos(this.angle);
 
-      // Target velocity
       const targetVx = forwardX * this.speed;
-      const targetVy = forwardY * this.speed;
+      const targetVz = forwardZ * this.speed;
 
-      const grip = this.keys.drift ? 0.85 : 0.94;
+      const grip = this.keys.drift ? car.driftFactor * 0.75 : car.driftFactor;
       this.vx = this.vx * grip + targetVx * (1 - grip);
-      this.vy = this.vy * grip + targetVy * (1 - grip);
+      this.vz = this.vz * grip + targetVz * (1 - grip);
 
-      // Advance position
-      this.x += this.vx * 60 * dt;
-      this.y += this.vy * 60 * dt;
+      // Update position
+      this.x += this.vx * dt;
+      this.z += this.vz * dt;
 
-      // Keep inside city boundary
-      this.x = Math.max(40, Math.min(CityMap.WORLD_SIZE - 40, this.x));
-      this.y = Math.max(40, Math.min(CityMap.WORLD_SIZE - 40, this.y));
+      // World boundary clamp
+      this.x = Math.max(-560, Math.min(560, this.x));
+      this.z = Math.max(-560, Math.min(560, this.z));
 
-      // Leave dynamic skid marks when drifting or braking at speed
-      const slip = Math.hypot(this.vx - targetVx, this.vy - targetVy);
-      if (slip > 1.8 && Math.abs(this.speed) > 4) {
-        this.skidMarks.push({
-          x: this.x - forwardX * 18,
-          y: this.y - forwardY * 18,
-          alpha: 0.6
-        });
-        if (this.skidMarks.length > 250) this.skidMarks.shift();
+      // Roll 3D wheels
+      if (this.playerMesh && this.playerMesh.wheels) {
+        this.playerMesh.wheels.forEach(w => w.rotation.x += this.speed * dt * 2.5);
+      }
+
+      // Drift smoke
+      if (this.keys.drift && Math.abs(this.speed) > 10) {
+        this.spawnParticle(this.x, 0.3, this.z, [0xcccccc, 0x888888]);
+      }
+
+      // Update 3D player mesh transform
+      if (this.playerMesh) {
+        this.playerMesh.position.set(this.x, 0, this.z);
+        this.playerMesh.rotation.y = this.angle;
+      }
+
+      // Collision with 3D buildings & pillars (NO DAMAGE CAP — CAR BOUNCES!)
+      const col = City3D.checkCollision(this.x, this.z, 2.2);
+      if (col.collided) {
+        this.handleCrash(this.x - col.nx * 3, this.z - col.nz * 3, 'Building');
       }
 
       // Record top speed in KM/H
-      const kmh = Math.round(Math.abs(this.speed) * 12);
+      const kmh = Math.round(Math.abs(this.speed) * 3.6);
       if (kmh > this.topSpeedRecord) this.topSpeedRecord = kmh;
-
-      // Collision with City Buildings
-      const col = CityMap.checkBuildingCollision(this.x, this.y, 20);
-      if (col.collided) {
-        window.soundEngine.playCrash();
-        this.health = Math.max(0, this.health - 22);
-        this.x += col.normalX * 6;
-        this.y += col.normalY * 6;
-        this.vx *= -0.4;
-        this.vy *= -0.4;
-        this.speed *= -0.3;
-        this.showQuip('💥 ভবনের দেয়ালে ক্র্যাশ!');
-      }
 
       // Update Engine Audio
       window.soundEngine.updateEngine(Math.abs(this.speed) / maxSpeed, this.keys.forward, this.nitroActive);
 
-      // Update Camera (Smooth Chase Cam)
-      const targetCamX = this.x;
-      const targetCamY = this.y;
-      this.camX += (targetCamX - this.camX) * 0.12;
-      this.camY += (targetCamY - this.camY) * 0.12;
+      // Update 3D Camera (Chase Cam or Hood Cam)
+      this.updateCamera(dt);
 
-      // Smooth camera rotation to follow car heading
-      let diff = this.angle - this.camAngle;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      this.camAngle += diff * 0.08;
-
-      // Dynamic Zoom based on speed
-      const targetZoom = 1.0 - (Math.abs(this.speed) / maxSpeed) * 0.25;
-      this.zoom += (targetZoom - this.zoom) * 0.08;
-
-      // Update Metro Train along Kazi Nazrul Islam Ave
-      this.metroTrain.y = (this.metroTrain.y + this.metroTrain.speed * 60 * dt) % CityMap.WORLD_SIZE;
+      // Update 3D Metro Train overhead
+      if (City3D.metroTrainMesh) {
+        City3D.metroTrainMesh.position.z = (City3D.metroTrainMesh.position.z + 18 * dt);
+        if (City3D.metroTrainMesh.position.z > 580) City3D.metroTrainMesh.position.z = -580;
+      }
 
       // Update Traffic & Missions
       this.updateTraffic(dt);
@@ -723,31 +749,68 @@
         this.showQuip(randQuip);
       }
 
-      // Health check
-      if (this.health <= 0) {
-        this.triggerGameOver('Your car was totaled in Dhaka traffic!');
-      }
-
       this.updateHUD();
+    }
+
+    updateCamera(dt) {
+      if (this.cameraMode === 'CHASE') {
+        const dist = 14 + (Math.abs(this.speed) / 50) * 4;
+        const height = 5.5;
+
+        // Position behind car
+        const targetX = this.x - Math.sin(this.angle) * dist;
+        const targetZ = this.z - Math.cos(this.angle) * dist;
+        const targetY = height;
+
+        this.camPos.x += (targetX - this.camPos.x) * 0.14;
+        this.camPos.y += (targetY - this.camPos.y) * 0.14;
+        this.camPos.z += (targetZ - this.camPos.z) * 0.14;
+
+        this.camTarget.x += (this.x - this.camTarget.x) * 0.2;
+        this.camTarget.y += (1.4 - this.camTarget.y) * 0.2;
+        this.camTarget.z += (this.z - this.camTarget.z) * 0.2;
+
+        this.camera.position.copy(this.camPos);
+        this.camera.lookAt(this.camTarget);
+      } else {
+        // Hood / Bumper Cam
+        const hoodX = this.x + Math.sin(this.angle) * 1.8;
+        const hoodZ = this.z + Math.cos(this.angle) * 1.8;
+        this.camera.position.set(hoodX, 1.3, hoodZ);
+        this.camera.lookAt(hoodX + Math.sin(this.angle) * 20, 1.2, hoodZ + Math.cos(this.angle) * 20);
+      }
+    }
+
+    spawnParticle(x, y, z, colors) {
+      const geo = new THREE.SphereGeometry(0.3, 4, 4);
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      const mat = new THREE.MeshBasicMaterial({ color: col });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      this.scene.add(mesh);
+
+      this.particles.push({
+        mesh: mesh,
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 2 + 1,
+        vz: (Math.random() - 0.5) * 4,
+        life: 0.35,
+        maxLife: 0.35
+      });
     }
 
     updateParticles(dt) {
       for (let i = 0; i < this.particles.length; i++) {
         const p = this.particles[i];
         p.life -= dt;
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.life <= 0) {
-          this.particles.splice(i, 1);
-          i--;
-        }
-      }
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+        p.mesh.scale.multiplyScalar(0.92);
 
-      // Fade skid marks
-      for (let i = 0; i < this.skidMarks.length; i++) {
-        this.skidMarks[i].alpha -= dt * 0.015;
-        if (this.skidMarks[i].alpha <= 0) {
-          this.skidMarks.splice(i, 1);
+        if (p.life <= 0) {
+          this.scene.remove(p.mesh);
+          this.particles.splice(i, 1);
           i--;
         }
       }
@@ -756,19 +819,19 @@
     updateHUD() {
       this.scoreVal.textContent = this.score.toLocaleString();
 
-      const currentStreet = CityMap.getStreetAt(this.x, this.y);
-      this.streetNameVal.textContent = currentStreet.name;
+      const street = City3D.getStreetAt(this.x, this.z);
+      this.streetNameVal.textContent = street.name;
 
-      const kmh = Math.round(Math.abs(this.speed) * 12);
+      const kmh = Math.round(Math.abs(this.speed) * 3.6);
       this.speedVal.textContent = kmh;
 
-      if (this.speed > 0.5) {
+      if (this.speed > 1) {
         if (kmh > 120) this.gearVal.textContent = '5';
         else if (kmh > 90) this.gearVal.textContent = '4';
         else if (kmh > 55) this.gearVal.textContent = '3';
         else if (kmh > 25) this.gearVal.textContent = '2';
         else this.gearVal.textContent = '1';
-      } else if (this.speed < -0.5) {
+      } else if (this.speed < -1) {
         this.gearVal.textContent = 'R';
       } else {
         this.gearVal.textContent = 'N';
@@ -776,420 +839,83 @@
 
       this.nitroPercent.textContent = Math.round(this.nitro) + '%';
       this.nitroBarFill.style.width = this.nitro + '%';
-
-      const healthPct = Math.max(0, Math.round((this.health / this.maxHealth) * 100));
-      this.healthVal.textContent = healthPct + '%';
-      this.healthBarFill.style.width = healthPct + '%';
-      if (healthPct < 30) {
-        this.healthBarFill.style.background = 'linear-gradient(90deg, #ff3344, #ff9900)';
-      }
-    }
-
-    triggerGameOver(reason) {
-      this.gameState = 'GAMEOVER';
-      window.soundEngine.stopEngine();
-      window.soundEngine.stopMusic();
-
-      document.getElementById('crash-reason').textContent = reason;
-      document.getElementById('final-score').textContent = this.score.toLocaleString();
-      document.getElementById('final-jobs').textContent = this.jobsCompleted;
-      document.getElementById('final-speed').textContent = this.topSpeedRecord + ' km/h';
-      document.getElementById('final-honks').textContent = this.honkCount;
-
-      this.hud.classList.add('hidden');
-      this.gameOverScreen.classList.remove('hidden');
     }
 
     // ==========================================
-    // RENDER CYCLE (2.5D ROTATING CITY BLOCKS)
-    // ==========================================
-    render() {
-      const ctx = this.ctx;
-      const w = this.canvas.width;
-      const h = this.canvas.height;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // World ground base
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.save();
-      // Center camera and apply rotation & zoom
-      ctx.translate(w / 2, h / 2);
-      ctx.scale(this.zoom, this.zoom);
-      ctx.rotate(-this.camAngle - Math.PI / 2);
-      ctx.translate(-this.camX, -this.camY);
-
-      // 1. Draw Streets, Avenues, and Intersections
-      this.renderCityStreets(ctx);
-
-      // 2. Draw Skid Marks
-      this.renderSkidMarks(ctx);
-
-      // 3. Draw Roadside Props & Landmarks (Shapla Chottor, Metro pillars)
-      this.renderCityProps(ctx);
-
-      // 4. Draw Waypoint Beacon if mission active
-      if (this.currentMission) {
-        const beacon = Sprites.cache['waypoint_beacon'];
-        if (beacon) {
-          ctx.drawImage(beacon, this.currentMission.dest.x - 30, this.currentMission.dest.y - 30);
-        }
-      }
-
-      // 5. Draw 2.5D Extruded Buildings (with parallax wall heights)
-      this.renderBuildings(ctx);
-
-      // 6. Draw Traffic Vehicles
-      this.renderTraffic(ctx);
-
-      // 7. Draw Player's Car & Headlight Beams
-      this.renderPlayerCar(ctx);
-
-      // 8. Draw Overhead Metro Rail Viaduct & MRT-6 Train
-      this.renderMetroRail(ctx);
-
-      ctx.restore();
-
-      // 9. Render Minimap GPS Radar
-      this.renderMinimap();
-    }
-
-    renderCityStreets(ctx) {
-      // Asphalt Avenues (North - South)
-      CityMap.avenues.forEach(ave => {
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(ave.x - ave.width / 2, 0, ave.width, CityMap.WORLD_SIZE);
-
-        // Sidewalk curbs
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(ave.x - ave.width / 2 - 12, 0, 12, CityMap.WORLD_SIZE);
-        ctx.fillRect(ave.x + ave.width / 2, 0, 12, CityMap.WORLD_SIZE);
-
-        // Yellow Center Line
-        ctx.strokeStyle = '#eab308';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([24, 20]);
-        ctx.beginPath();
-        ctx.moveTo(ave.x, 0);
-        ctx.lineTo(ave.x, CityMap.WORLD_SIZE);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      });
-
-      // Asphalt Cross Streets (East - West)
-      CityMap.streets.forEach(str => {
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, str.y - str.width / 2, CityMap.WORLD_SIZE, str.width);
-
-        // Sidewalk curbs
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(0, str.y - str.width / 2 - 12, CityMap.WORLD_SIZE, 12);
-        ctx.fillRect(0, str.y + str.width / 2, CityMap.WORLD_SIZE, 12);
-
-        // White Lane dividers
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([20, 20]);
-        ctx.beginPath();
-        ctx.moveTo(0, str.y);
-        ctx.lineTo(CityMap.WORLD_SIZE, str.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      });
-
-      // Zebra Crossings at all 4-way intersections
-      CityMap.avenues.forEach(ave => {
-        CityMap.streets.forEach(str => {
-          this.renderZebraCrossings(ctx, ave.x, str.y, ave.width, str.width);
-        });
-      });
-
-      // Shapla Chottor Roundabout (Circular asphalt ring)
-      CityMap.roundabouts.forEach(r => {
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.radius + 50, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = '#facc15';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([18, 14]);
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.radius + 20, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      });
-    }
-
-    renderZebraCrossings(ctx, ix, iy, aw, sw) {
-      ctx.fillStyle = '#ffffff';
-      const stripeW = 8;
-      // North crossing
-      for (let x = ix - aw / 2 + 10; x < ix + aw / 2 - 10; x += 18) {
-        ctx.fillRect(x, iy - sw / 2 - 20, stripeW, 16);
-      }
-      // South crossing
-      for (let x = ix - aw / 2 + 10; x < ix + aw / 2 - 10; x += 18) {
-        ctx.fillRect(x, iy + sw / 2 + 4, stripeW, 16);
-      }
-      // West crossing
-      for (let y = iy - sw / 2 + 10; y < iy + sw / 2 - 10; y += 18) {
-        ctx.fillRect(ix - aw / 2 - 20, y, 16, stripeW);
-      }
-      // East crossing
-      for (let y = iy - sw / 2 + 10; y < iy + sw / 2 - 10; y += 18) {
-        ctx.fillRect(ix + aw / 2 + 4, y, 16, stripeW);
-      }
-    }
-
-    renderSkidMarks(ctx) {
-      this.skidMarks.forEach(s => {
-        ctx.fillStyle = `rgba(10, 10, 15, ${s.alpha})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    renderCityProps(ctx) {
-      // Shapla Chottor Fountain
-      const shapla = Sprites.cache['prop_shapla'];
-      if (shapla) {
-        CityMap.roundabouts.forEach(r => {
-          ctx.drawImage(shapla, r.x - 45, r.y - 45);
-        });
-      }
-
-      // Roadside Props (Tea stalls, Metro pillars, Carts)
-      CityMap.props.forEach(p => {
-        const sprite = Sprites.cache[p.type === 'metro_pillar' ? 'prop_metro_pillar' : 'prop_cha_dokan'];
-        if (sprite) {
-          ctx.drawImage(sprite, p.x - p.w / 2, p.y - p.h / 2, p.w, p.h);
-        }
-      });
-    }
-
-    // 2.5D Extruded Buildings (Pseudo-3D parallax effect)
-    renderBuildings(ctx) {
-      // Only render buildings near camera viewport for performance
-      const viewRadius = 800;
-
-      CityMap.buildings.forEach(b => {
-        if (Math.abs(b.x - this.camX) > viewRadius || Math.abs(b.y - this.camY) > viewRadius) return;
-
-        // Calculate parallax offset based on camera position
-        const offsetX = ((b.x + b.w / 2) - this.camX) * (b.height3D / 500);
-        const offsetY = ((b.y + b.h / 2) - this.camY) * (b.height3D / 500);
-
-        // Building Walls (Extrusion shadow)
-        ctx.fillStyle = b.theme.wall;
-        ctx.beginPath();
-        ctx.moveTo(b.x, b.y);
-        ctx.lineTo(b.x + b.w, b.y);
-        ctx.lineTo(b.x + b.w + offsetX, b.y + offsetY);
-        ctx.lineTo(b.x + offsetX, b.y + offsetY);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(b.x + b.w, b.y);
-        ctx.lineTo(b.x + b.w, b.y + b.h);
-        ctx.lineTo(b.x + b.w + offsetX, b.y + b.h + offsetY);
-        ctx.lineTo(b.x + b.w + offsetX, b.y + offsetY);
-        ctx.closePath();
-        ctx.fill();
-
-        // Building Rooftop
-        ctx.fillStyle = b.theme.roof;
-        ctx.fillRect(b.x + offsetX, b.y + offsetY, b.w, b.h);
-
-        // Rooftop Trim
-        ctx.strokeStyle = b.theme.trim;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(b.x + offsetX, b.y + offsetY, b.w, b.h);
-
-        // Rooftop Billboard
-        if (b.billboard) {
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(b.x + offsetX + b.w / 2 - 30, b.y + offsetY + 6, 60, 16);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 9px Hind Siliguri, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(b.billboard, b.x + offsetX + b.w / 2, b.y + offsetY + 18);
-        }
-
-        // Water tank
-        if (b.hasWaterTank) {
-          ctx.fillStyle = '#0284c7';
-          ctx.beginPath();
-          ctx.arc(b.x + offsetX + 16, b.y + offsetY + 16, 7, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-    }
-
-    renderTraffic(ctx) {
-      this.traffic.forEach(car => {
-        ctx.save();
-        ctx.translate(car.x, car.y);
-        ctx.rotate(car.angle);
-        ctx.drawImage(car.sprite, -car.sprite.width / 2, -car.sprite.height / 2);
-        ctx.restore();
-      });
-    }
-
-    renderPlayerCar(ctx) {
-      const car = CARS[this.selectedCarIndex];
-      const sprite = Sprites.cache[car.sprite];
-      if (!sprite) return;
-
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.angle);
-
-      // Headlight Beams projecting forward
-      const grad = ctx.createRadialGradient(25, 0, 10, 140, 0, 160);
-      grad.addColorStop(0, 'rgba(255, 255, 240, 0.45)');
-      grad.addColorStop(1, 'rgba(255, 255, 240, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(25, -12);
-      ctx.lineTo(240, -60);
-      ctx.lineTo(240, 60);
-      ctx.lineTo(25, 12);
-      ctx.closePath();
-      ctx.fill();
-
-      // Render nitro flame particles
-      for (let i = 0; i < this.particles.length; i++) {
-        const p = this.particles[i];
-        ctx.save();
-        ctx.translate(p.x - this.x, p.y - this.y);
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(0, 0, (p.life / p.maxLife) * 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Draw Player Car Sprite
-      const w = sprite.width * car.scale;
-      const h = sprite.height * car.scale;
-      ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
-
-      ctx.restore();
-    }
-
-    renderMetroRail(ctx) {
-      const nazrul = CityMap.avenues.find(a => a.id === 'nazrul');
-      if (!nazrul) return;
-
-      // Elevated concrete viaduct tracks spanning along Nazrul Ave
-      ctx.fillStyle = 'rgba(71, 85, 105, 0.85)';
-      ctx.fillRect(nazrul.x - 22, 0, 44, CityMap.WORLD_SIZE);
-
-      // Silver rail tracks
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(nazrul.x - 12, 0);
-      ctx.lineTo(nazrul.x - 12, CityMap.WORLD_SIZE);
-      ctx.moveTo(nazrul.x + 12, 0);
-      ctx.lineTo(nazrul.x + 12, CityMap.WORLD_SIZE);
-      ctx.stroke();
-
-      // Metro Train zooming along tracks
-      const trainY = this.metroTrain.y;
-      ctx.save();
-      ctx.translate(nazrul.x, trainY);
-      ctx.fillStyle = '#f8fafc';
-      ctx.roundRect(-18, -120, 36, 240, 8);
-      ctx.fill();
-      // Green & red stripe
-      ctx.fillStyle = '#15803d';
-      ctx.fillRect(-18, -120, 6, 240);
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(-12, -120, 4, 240);
-      // MRT Headlight
-      ctx.fillStyle = '#00f0ff';
-      ctx.beginPath();
-      ctx.arc(0, 115, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ==========================================
-    // MINIMAP GPS RADAR
+    // 2D GPS RADAR MINIMAP
     // ==========================================
     renderMinimap() {
       if (!this.miniCtx) return;
       const m = this.miniCtx;
-      const size = this.minimapCanvas.width;
-      const scale = size / CityMap.WORLD_SIZE;
+      const size = this.miniCanvas.width;
+      const worldS = City3D.WORLD_SIZE;
+      const scale = size / worldS;
+      const halfW = worldS / 2;
 
       m.clearRect(0, 0, size, size);
 
-      // Background
-      m.fillStyle = '#090e1a';
+      // Radar background
+      m.fillStyle = '#070b16';
       m.fillRect(0, 0, size, size);
 
-      // Draw Avenues & Streets
-      m.fillStyle = '#223048';
-      CityMap.avenues.forEach(a => {
-        m.fillRect((a.x - a.width / 2) * scale, 0, a.width * scale, size);
-      });
-      CityMap.streets.forEach(s => {
-        m.fillRect(0, (s.y - s.width / 2) * scale, size, s.width * scale);
+      // Avenues
+      m.fillStyle = '#1e293b';
+      City3D.avenues.forEach(ave => {
+        m.fillRect((ave.x + halfW - ave.width / 2) * scale, 0, ave.width * scale, size);
       });
 
-      // Draw Shapla Chottor
-      CityMap.roundabouts.forEach(r => {
-        m.fillStyle = '#0284c7';
-        m.beginPath();
-        m.arc(r.x * scale, r.y * scale, 8, 0, Math.PI * 2);
-        m.fill();
+      // Streets
+      City3D.streets.forEach(str => {
+        m.fillRect(0, (str.z + halfW - str.width / 2) * scale, size, str.width * scale);
       });
 
-      // Draw Traffic Dots
+      // Shapla Chottor Roundabout
+      m.fillStyle = '#0284c7';
+      m.beginPath();
+      m.arc((City3D.roundabout.x + halfW) * scale, (City3D.roundabout.z + halfW) * scale, 6, 0, Math.PI * 2);
+      m.fill();
+
+      // Traffic dots
       this.traffic.forEach(car => {
         m.fillStyle = car.type === 'Bus' ? '#f97316' : (car.type === 'CNG' ? '#00e676' : '#ff1493');
-        m.fillRect(car.x * scale - 1, car.y * scale - 1, 3, 3);
+        m.fillRect((car.x + halfW) * scale - 1, (car.z + halfW) * scale - 1, 3, 3);
       });
 
-      // Draw Mission Objective Beacon
+      // Waypoint Beacon
       if (this.currentMission) {
         m.fillStyle = '#facc15';
         m.beginPath();
-        m.arc(this.currentMission.dest.x * scale, this.currentMission.dest.y * scale, 4, 0, Math.PI * 2);
+        m.arc((this.currentMission.dest.x + halfW) * scale, (this.currentMission.dest.z + halfW) * scale, 4, 0, Math.PI * 2);
         m.fill();
       }
 
-      // Draw Player Arrow
+      // Player arrow
       m.save();
-      m.translate(this.x * scale, this.y * scale);
+      m.translate((this.x + halfW) * scale, (this.z + halfW) * scale);
       m.rotate(this.angle);
       m.fillStyle = '#00f0ff';
       m.beginPath();
-      m.moveTo(6, 0);
+      m.moveTo(0, 7);
       m.lineTo(-4, -4);
-      m.lineTo(-2, 0);
-      m.lineTo(-4, 4);
+      m.lineTo(0, -2);
+      m.lineTo(4, -4);
       m.closePath();
       m.fill();
       m.restore();
     }
 
     loop(currentTime) {
-      const dt = Math.min(0.1, (currentTime - this.lastFrameTime) / 1000);
-      this.lastFrameTime = currentTime;
+      const dt = Math.min(0.1, (currentTime - this.lastTime) / 1000);
+      this.lastTime = currentTime;
 
       try {
         this.update(dt);
-        this.render();
+        if (this.renderer && this.scene && this.camera) {
+          this.renderer.render(this.scene, this.camera);
+        }
+        this.renderMinimap();
       } catch (err) {
-        console.error('Error during game tick:', err);
+        console.error('Error in 3D loop:', err);
       }
 
       requestAnimationFrame((t) => this.loop(t));
@@ -1197,6 +923,6 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    window.dhakaCityGame = new DhakaCityGame();
+    window.dhakaCity3DGame = new DhakaCity3DGame();
   });
 })();

@@ -1,56 +1,51 @@
-# 🏙️ DHAKA CITY RUSH (ঢাকা সিটি রেসার - Open City Blocks)
+# 🏎️ DHAKA CITY 3D (ঢাকা সিটি রেসার ৩ডি)
 
-An open-world, multi-block city racing and driving experience set across the streets, avenues, roundabouts, and alleys of **Dhaka, Bangladesh**!
+A full **true 3D** open-city racing and driving experience set across the multi-block streets, elevated flyovers, roundabouts, and alleys of **Dhaka, Bangladesh**!
 
 ---
 
-## 🌟 What's New: Full City Block Grid & Intersections
+## 🌟 Major Upgrades in This Version
 
-Instead of a single continuous highway, **Dhaka City Rush** now features an authentic **open city grid**:
+### 1. True 3D Chase-Camera View (No more 2D Top-Down!)
+- **Dynamic 3D Chase Camera**: Follows right behind your car with real depth, elevated perspective, and dynamic speed FOV.
+- **Cockpit / Hood Cam Mode**: Press **`C`** to toggle instantly to first-person bumper view!
+- **True 3D City & Sky**: 3D textured buildings towering above, glowing billboards (*বিকাশ, রকমারি, প্রাণ, গ্রামীণফোন, পাঠাও*), dusk sky, and headlights illuminating the asphalt.
+- **Elevated Metro Rail (MRT Line 6)**: Drive under high concrete viaduct pillars as the 3D Metro train cruises high above your roof!
+- **3D Shapla Chottor (শাপলা চত্বর)**: Circular roundabout featuring a 3D water pool and giant water lily petals sculpture (*জাতীয় ফুল শাপলা*).
 
-1. **Avenues (North - South)**:
-   - 🚆 **Kazi Nazrul Islam Avenue**: 4-lane major boulevard featuring elevated concrete pillars and the **Dhaka Metro Rail (MRT Line 6)** train zooming overhead!
-   - 🚗 **Mirpur Road**: High-density arterial road with rickshaw lanes and colorful commuter traffic.
-   - 🏬 **Satmasjid Road**: Bustling restaurant & cafe avenue lined with Tong-er Cha stalls.
-   - 🏢 **Gulshan Avenue**: Upscale modern commercial district with corporate skyscrapers and glass towers.
+### 2. Damage Cap Removed (Car is Indestructible 🛡️)
+- **No More Game-Over Screens!** You can crash into buses, rickshaws, building walls, and concrete pillars without your car getting totaled.
+- Cars realistically bounce off obstacles with physical impulse rebounds, bright sparks, and crash sounds, allowing endless driving and drifting fun with zero interruptions!
 
-2. **Cross Streets (East - West)**:
-   - ✈️ **Airport Connecting Road**: High-speed northern connector avenue.
-   - 🏥 **Panthapath**: Central corridor connecting east and west Dhaka.
-   - ☕ **Dhanmondi Road 27**: Famous street food & adda hub with tea stalls.
-   - 🕌 **Old Dhaka Heritage Way (পুরান ঢাকা সড়ক)**: Atmospheric historic district with warm brick buildings and narrow alleys.
+### 3. 3D Bangladeshi Vehicles & Traffic
+- 🚗 **Toyota Premio 1.5**: Aerodynamic white sedan with spoiler, headlights, and 3D rotating wheels with rims.
+- 🚕 **Yellow Dhaka Cab**: Classic yellow taxi with glowing rooftop sign.
+- 🚙 **VIP Black Prado SUV**: Stately dark SUV with high suspension and bull-bars.
+- 🟢 **Tuned Turbo CNG**: Authentic Dhaka 3-wheeler with green chassis, black canvas canopy, yellow wire mesh cage, and dual nitro exhausts!
+- 🛺 **3D Traffic**: Cycle rickshaws with passenger hoods and puller, green CNGs, and colorful Dhaka buses (*শিকড় পরিবহন, বলাকা এক্সপ্রেস*) navigating streets.
 
-3. **Landmarks & Intersections**:
-   - 🌸 **Shapla Chottor Roundabout**: Iconic circular intersection with a blue water fountain and white water lily petals (*জাতীয় ফুল শাপলা*). Drift smoothly around the circular traffic flow!
-   - 🚏 **4-Way Intersections with Zebra Crossings**: Full turns onto any block, cross-traffic, and pedestrian crossings.
-   - 🏢 **2.5D Extruded Buildings**: Multi-story city buildings with rooftop water tanks, satellite dishes, and authentic Bangladeshi billboards (*বিকাশ, রকমারি, প্রাণ, গ্রামীণফোন, পাঠাও*).
-
-4. **Live GPS Minimap & Navigation Compass**:
-   - Live radar in the top-right corner displays the entire city block layout, streets, your car's position & heading, and color-coded traffic dots.
-   - Overhead navigation compass points you directly to passenger destinations and tea stalls!
-
-5. **Game Modes**:
-   - 🗺️ **Free Roam (শহর ঘোরা)**: Explore every corner of Dhaka at your own pace, practice handbrake drifts around corners, and honk at traffic.
-   - 🚖 **Dhaka Taxi & Chai Delivery Missions**: Pick up passengers and deliver hot tea against the clock for cash rewards, nitro refills, and Bengali tips!
+### 4. 100% Offline Three.js
+- Bundled with a local `three.min.js` file — **zero internet connection or CDN required**! Works seamlessly when opened via `file:///`.
 
 ---
 
 ## 🎮 Controls
 
-| Action | Keyboard | Touch / On-Screen Button |
+| Action | Keyboard | Touch / Mobile Button |
 |---|---|---|
-| **Drive Forward** | `▲` or `W` | `⚡ GAS` |
-| **Reverse / Brake** | `▼` or `S` | `🛑 REVERSE` |
-| **Steer & Turn onto Blocks** | `◀` `▶` or `A` `D` | `◀` `▶` |
-| **Handbrake Drift** | `SPACE` | `💨 DRIFT` |
+| **Accelerate Forward** | `▲` or `W` | `⚡ GAS` |
+| **Brake / Reverse** | `▼` or `S` | `🛑 REVERSE` |
+| **Steer Left / Right** | `◀` `▶` or `A` `D` | `◀` `▶` |
+| **Handbrake 3D Drift** | `SPACE` | `💨 DRIFT` |
 | **Dhaka Horn (Clear Traffic!)** | `H` | `📢 HONK` |
-| **CNG Nitro Boost** | `SHIFT` or `N` | `🔥 NITRO` |
+| **CNG Nitro Turbo** | `SHIFT` or `N` | `🔥 NITRO` |
+| **Toggle Camera View** | `C` | — |
 
 ---
 
 ## 🚀 How to Play Locally
 
 1. **Double-click `play.bat`** in this folder to immediately launch the game in your default browser!
-2. Or open `index.html` directly in Chrome, Edge, or Firefox.
+2. Or double-click `index.html` directly in Chrome, Edge, or Firefox.
 
-Enjoy drifting around Dhaka's city blocks! জয় বাংলা!
+Enjoy cruising through 3D Dhaka! জয় বাংলা!
