@@ -701,3 +701,146 @@ input:checked + .slider:before {
   .nitro-wrapper, .health-wrapper { width: 120px; }
   #minimap-container { top: auto; bottom: 125px; right: 8px; }
 }
+
+/* ================= PAUSE MENU & LAN MULTIPLAYER STYLES ================= */
+.pause-btn {
+  cursor: pointer;
+  background: rgba(30, 41, 59, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  transition: all 0.2s;
+  min-width: 65px;
+}
+.pause-btn:hover {
+  background: rgba(0, 240, 255, 0.25) !important;
+  border-color: var(--neon-cyan) !important;
+}
+.pause-icon {
+  font-size: clamp(14px, 2vw, 18px);
+}
+
+.pause-box {
+  max-width: 520px;
+}
+
+.pause-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: rgba(8, 12, 22, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cell-label {
+  font-size: 8.5px;
+  color: #8fa0be;
+  letter-spacing: 1px;
+}
+.cell-val {
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.lan-invite-card, .start-lan-card {
+  background: rgba(2, 132, 199, 0.15);
+  border: 1.5px solid rgba(2, 132, 199, 0.5);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+.lan-header, .start-lan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(10px, 1.3vw, 12px);
+  font-weight: 800;
+  color: var(--neon-cyan);
+  margin-bottom: 6px;
+}
+.lan-status-tag, .lan-badge-active {
+  background: rgba(0, 230, 118, 0.2);
+  border: 1px solid var(--dhaka-cng-green);
+  color: var(--dhaka-cng-green);
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+.lan-subtext, .lan-hint {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  display: block;
+}
+.lan-link-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lan-input {
+  flex-grow: 1;
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #38bdf8;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  outline: none;
+}
+.btn-copy {
+  background: var(--neon-cyan);
+  border: none;
+  color: #04101e;
+  font-weight: 900;
+  font-size: 10.5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s;
+}
+.btn-copy:active {
+  transform: scale(0.94);
+}
+.lan-players-row {
+  font-size: 9.5px;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.pause-sub-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.btn-secondary {
+  flex-grow: 1;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 9px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--neon-cyan);
+}

@@ -332,6 +332,40 @@ class SoundEngine {
     noise.start(now);
   }
 
+  // Realistic Tire Screech (Drift & Hard Braking)
+  playTireScreech() {
+    if (!this.ctx || !this.enabled) return;
+    if (this.screeching) return;
+    this.screeching = true;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(850, now);
+    osc.frequency.linearRampToValueAtTime(1300, now + 0.1);
+    osc.frequency.linearRampToValueAtTime(750, now + 0.35);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1100, now);
+    filter.Q.value = 4.0;
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.4);
+
+    setTimeout(() => { this.screeching = false; }, 220);
+  }
+
   // --- Background Synth Beat (Procedural Retro Arcade Chiptune/Bhangra Beat) ---
   startMusic() {
     if (!this.ctx || !this.enabled || this.musicPlaying) return;

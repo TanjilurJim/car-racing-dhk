@@ -105,6 +105,22 @@
       // Screen Shake
       this.screenShake = 0;
 
+      // Realistic Physics & Dynamics (Weight Transfer & Spin)
+      this.pitch = 0;
+      this.roll = 0;
+      this.spinVy = 0;
+      this.skidMarks = [];
+
+      // Pause State
+      this.isPaused = false;
+
+      // LAN Multiplayer State
+      this.lanWs = null;
+      this.myId = null;
+      this.myName = 'Dhakaiya Racer';
+      this.remotePlayers = new Map();
+      this.lanSendTimer = 0;
+
       // Camera Follow
       this.camPos = new THREE.Vector3(this.x, 6, this.z - 14);
       this.camTarget = new THREE.Vector3(this.x, 1.5, this.z);
@@ -134,6 +150,7 @@
       this.initThree();
       this.setupDOM();
       this.setupControls();
+      this.initLanMultiplayer();
 
       requestAnimationFrame((t) => this.loop(t));
     }
@@ -256,6 +273,11 @@
           this.cameraMode = this.cameraMode === 'CHASE' ? 'HOOD' : 'CHASE';
           this.showQuip(`Camera switched to ${this.cameraMode} View! 🎥`);
         }
+        if (e.code === 'Escape') {
+          if (this.gameState === 'PLAYING') {
+            this.togglePause();
+          }
+        }
       });
 
       window.addEventListener('keyup', (e) => {
@@ -307,6 +329,60 @@
         camBtn.addEventListener('click', toggleCam);
         camBtn.addEventListener('touchstart', toggleCam, { passive: false });
       }
+
+      // Pause Button & Pause Menu Bindings
+      const pauseBtn = document.getElementById('btn-pause');
+      if (pauseBtn) {
+        pauseBtn.onclick = () => this.togglePause();
+      }
+
+      const resumeBtn = document.getElementById('btn-resume');
+      if (resumeBtn) {
+        resumeBtn.onclick = () => this.togglePause();
+      }
+
+      const restartBtn = document.getElementById('btn-restart');
+      if (restartBtn) {
+        restartBtn.onclick = () => this.restartGame();
+      }
+
+      const pauseCamBtn = document.getElementById('btn-pause-cam');
+      if (pauseCamBtn) {
+        pauseCamBtn.onclick = () => {
+          this.cameraMode = this.cameraMode === 'CHASE' ? 'HOOD' : 'CHASE';
+          this.showQuip(`Camera switched to ${this.cameraMode} View! 🎥`);
+        };
+      }
+
+      const serviceBtn = document.getElementById('btn-service');
+      if (serviceBtn) {
+        serviceBtn.onclick = () => {
+          this.health = 100;
+          this.nitro = 100;
+          Models3D.updateDamageDeformation(this.playerMesh, 100);
+          this.showQuip('🛠️ ফুল সার্ভিসিং সম্পন্ন! গাড়ি একদম নতুনের মতো (100% Brand New)! ✨');
+          this.togglePause();
+        };
+      }
+
+      // Copy LAN link buttons
+      const wireCopy = (btnId, inputId) => {
+        const btn = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        if (btn && input) {
+          btn.onclick = () => {
+            input.select();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(input.value);
+            }
+            btn.textContent = 'COPIED! ✅';
+            setTimeout(() => { btn.textContent = '📋 COPY LINK'; }, 2000);
+          };
+        }
+      };
+
+      wireCopy('btn-copy-lan', 'lan-link-input');
+      wireCopy('btn-start-copy-lan', 'start-lan-input');
     }
 
     changeCar(delta) {
@@ -378,10 +454,269 @@
       this.jobsCompleted = 0;
 
       this.gameState = 'PLAYING';
+      this.isPaused = false;
+      const pauseModal = document.getElementById('pause-modal');
+      if (pauseModal) pauseModal.classList.add('hidden');
+
       this.startScreen.classList.add('hidden');
       this.hud.classList.remove('hidden');
 
       this.showQuip('৩ডি ঢাকা কানেক্টেড রোডে স্বাগতম! ফুল স্পীডে ছুটুন! 🏎️');
+    }
+
+    // ==========================================
+    // ESCAPE KEY & PAUSE SYSTEM
+    // ==========================================
+    togglePause() {
+      if (this.gameState !== 'PLAYING') return;
+      this.isPaused = !this.isPaused;
+      const pauseModal = document.getElementById('pause-modal');
+
+      if (this.isPaused) {
+        if (pauseModal) pauseModal.classList.remove('hidden');
+        window.soundEngine.stopEngine();
+
+        // Update stats on pause modal
+        const street = City3D.getStreetAt(this.x, this.z);
+        const pStreet = document.getElementById('pause-street-val');
+        if (pStreet) pStreet.textContent = street.name;
+
+        const pSpeed = document.getElementById('pause-speed-val');
+        if (pSpeed) pSpeed.textContent = Math.round(Math.abs(this.speed) * 3.6) + ' KM/H';
+
+        const pScore = document.getElementById('pause-score-val');
+        if (pScore) pScore.textContent = this.score.toLocaleString();
+
+        const pHealth = document.getElementById('pause-health-val');
+        if (pHealth) {
+          pHealth.textContent = `${this.health}% (${this.health >= 80 ? 'BRAND NEW' : (this.health >= 40 ? 'GOOD' : 'CRITICAL')})`;
+          pHealth.style.color = this.health >= 80 ? '#00e676' : (this.health >= 40 ? '#facc15' : '#ff3344');
+        }
+      } else {
+        if (pauseModal) pauseModal.classList.add('hidden');
+        this.lastTime = performance.now();
+      }
+    }
+
+    restartGame() {
+      const pauseModal = document.getElementById('pause-modal');
+      if (pauseModal) pauseModal.classList.add('hidden');
+      this.isPaused = false;
+      this.startGame();
+    }
+
+    // ==========================================
+    // LAN MULTIPLAYER CLIENT (PvP Racing & Damage)
+    // ==========================================
+    initLanMultiplayer() {
+      const isHttp = typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http');
+      const wsHost = isHttp ? window.location.host : 'localhost:3000';
+      const wsProto = (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+      const wsUrl = `${wsProto}//${wsHost}`;
+
+      // Update input fields with LAN IP
+      if (isHttp && typeof fetch === 'function') {
+        fetch('/api/lan-info')
+          .then(res => res.json())
+          .then(info => {
+            const el1 = document.getElementById('lan-link-input');
+            const el2 = document.getElementById('start-lan-input');
+            if (el1) el1.value = info.lanUrl;
+            if (el2) el2.value = info.lanUrl;
+          })
+          .catch(() => {});
+      }
+
+      if (typeof WebSocket === 'undefined') return;
+
+      try {
+        this.lanWs = new WebSocket(wsUrl);
+
+        this.lanWs.onopen = () => {
+          console.log('[LAN] Connected to multiplayer server at', wsUrl);
+          const badge1 = document.getElementById('lan-status-tag');
+          const badge2 = document.getElementById('start-lan-badge');
+          if (badge1) { badge1.textContent = '🟢 CONNECTED'; badge1.className = 'lan-status-tag'; }
+          if (badge2) { badge2.textContent = '🟢 LAN READY'; badge2.className = 'lan-badge-active'; }
+        };
+
+        this.lanWs.onmessage = (evt) => {
+          try {
+            const msg = JSON.parse(evt.data);
+            this.handleLanMessage(msg);
+          } catch (e) {}
+        };
+
+        this.lanWs.onclose = () => {
+          const badge1 = document.getElementById('lan-status-tag');
+          if (badge1) { badge1.textContent = '⚪ OFFLINE'; }
+        };
+      } catch (err) {
+        console.warn('[LAN] Offline or local file mode', err);
+      }
+    }
+
+    handleLanMessage(msg) {
+      if (msg.type === 'WELCOME') {
+        this.myId = msg.myId;
+        this.myName = msg.myName;
+        if (msg.players) {
+          msg.players.forEach(p => {
+            if (p.id !== this.myId) this.spawnRemotePlayer(p);
+          });
+          const countEl = document.getElementById('lan-count');
+          if (countEl) countEl.textContent = this.remotePlayers.size + 1;
+        }
+      } else if (msg.type === 'PLAYER_JOINED') {
+        if (msg.player && msg.player.id !== this.myId) {
+          this.spawnRemotePlayer(msg.player);
+          this.showQuip(`🏎️ ${msg.player.name} ল্যান রেসে যোগ দিলেন!`);
+          const countEl = document.getElementById('lan-count');
+          if (countEl) countEl.textContent = this.remotePlayers.size + 1;
+        }
+      } else if (msg.type === 'PLAYER_UPDATE') {
+        if (msg.id === this.myId) return;
+        let remote = this.remotePlayers.get(msg.id);
+        if (!remote) {
+          remote = this.spawnRemotePlayer(msg);
+        }
+        if (remote) {
+          remote.targetX = msg.x;
+          remote.targetZ = msg.z;
+          remote.targetAngle = msg.angle;
+          remote.speed = msg.speed;
+          remote.pitch = msg.pitch || 0;
+          remote.roll = msg.roll || 0;
+          remote.health = msg.health;
+          if (remote.nameTag && remote.nameTag.updateNameTag) {
+            remote.nameTag.updateNameTag(msg.name || remote.name, msg.health);
+          }
+          Models3D.updateDamageDeformation(remote.mesh, msg.health);
+        }
+      } else if (msg.type === 'PVP_RAM_EVENT') {
+        if (msg.targetId === this.myId) {
+          // You got rammed by another player!
+          window.soundEngine.playCrash();
+          this.vx += msg.nx * msg.impulse * 0.45;
+          this.vz += msg.nz * msg.impulse * 0.45;
+          this.speed *= 0.35;
+          this.health = Math.max(5, this.health - msg.damage);
+          this.screenShake = 1.3;
+          Models3D.updateDamageDeformation(this.playerMesh, this.health);
+          for (let i = 0; i < 20; i++) {
+            this.spawnParticle(this.x, 1.2, this.z, [0xffcc00, 0xff0055, 0xffffff]);
+          }
+          this.showQuip(`💥 ${msg.attackerName} আপনাকে প্রচণ্ড ধাক্কা দিলো! (-${msg.damage}% HP)`);
+        }
+      } else if (msg.type === 'PLAYER_HONKED') {
+        window.soundEngine.playBusHorn();
+      } else if (msg.type === 'PLAYER_LEFT') {
+        const remote = this.remotePlayers.get(msg.id);
+        if (remote) {
+          this.scene.remove(remote.mesh);
+          this.remotePlayers.delete(msg.id);
+          this.showQuip(`👋 ${remote.name} রেস থেকে বের হয়ে গেলেন।`);
+          const countEl = document.getElementById('lan-count');
+          if (countEl) countEl.textContent = this.remotePlayers.size + 1;
+        }
+      }
+    }
+
+    spawnRemotePlayer(data) {
+      if (this.remotePlayers.has(data.id)) return this.remotePlayers.get(data.id);
+      const mesh = data.carType === 'cng' ? Models3D.createCngModel(false) : Models3D.createCarModel(data.carType || 'premio');
+      mesh.position.set(data.x, 0, data.z);
+      this.scene.add(mesh);
+
+      // Floating 3D billboard player name tag
+      const nameTag = Models3D.createPlayerNameTag(data.name || 'RACER', '#00f0ff');
+      mesh.add(nameTag);
+
+      const remoteObj = {
+        id: data.id,
+        name: data.name || 'RACER',
+        mesh: mesh,
+        nameTag: nameTag,
+        targetX: data.x,
+        targetZ: data.z,
+        targetAngle: data.angle || 0,
+        speed: data.speed || 0,
+        pitch: 0,
+        roll: 0,
+        health: data.health || 100,
+        carType: data.carType || 'premio'
+      };
+
+      this.remotePlayers.set(data.id, remoteObj);
+      return remoteObj;
+    }
+
+    updateRemotePlayers(dt) {
+      this.remotePlayers.forEach(remote => {
+        // Smooth interpolation
+        remote.mesh.position.x += (remote.targetX - remote.mesh.position.x) * 0.35;
+        remote.mesh.position.z += (remote.targetZ - remote.mesh.position.z) * 0.35;
+        remote.mesh.rotation.y += (remote.targetAngle - remote.mesh.rotation.y) * 0.35;
+        remote.mesh.rotation.x = remote.pitch;
+        remote.mesh.rotation.z = remote.roll;
+
+        if (remote.mesh.wheels) {
+          remote.mesh.wheels.forEach(w => w.rotation.x += remote.speed * dt * 2.5);
+        }
+      });
+    }
+
+    updatePvPCollisions() {
+      if (this.remotePlayers.size === 0) return;
+      const myCar = CARS[this.selectedCarIndex];
+      const m1 = myCar.mass;
+
+      this.remotePlayers.forEach(remote => {
+        const dx = this.x - remote.mesh.position.x;
+        const dz = this.z - remote.mesh.position.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (dist < 2.8) {
+          const m2 = 1400; // estimated remote car mass
+          const nx = (dx / dist) || 0;
+          const nz = (dz / dist) || 1;
+
+          const relSpeed = Math.abs(this.speed - remote.speed) + 8;
+          const impulse = ((1 + 0.6) * relSpeed * (m1 * m2)) / (m1 + m2);
+
+          // Local recoil & damage
+          this.vx += nx * (impulse / m1) * 0.45;
+          this.vz += nz * (impulse / m1) * 0.45;
+          this.speed *= 0.5;
+
+          const damage = Math.min(40, Math.round((impulse / m1) * 2.8));
+          this.health = Math.max(5, this.health - damage);
+          this.screenShake = 1.2;
+          window.soundEngine.playCrash();
+
+          Models3D.updateDamageDeformation(this.playerMesh, this.health);
+
+          // Broadcast RAM to remote player over WebSocket
+          if (this.lanWs && this.lanWs.readyState === 1) { // 1 = OPEN
+            this.lanWs.send(JSON.stringify({
+              type: 'PVP_RAM',
+              targetId: remote.id,
+              damage: damage,
+              impulse: impulse / m2,
+              nx: -nx,
+              nz: -nz,
+              x: this.x,
+              z: this.z
+            }));
+          }
+
+          for (let i = 0; i < 20; i++) {
+            this.spawnParticle(this.x - nx * 1.2, 1.2, this.z - nz * 1.2, [0xffcc00, 0xff0055, 0xffffff]);
+          }
+
+          this.showQuip(`💥 আপনি ${remote.name}-কে প্রচণ্ড ধাক্কা দিলেন! (-${damage}% HP)`);
+        }
+      });
     }
 
     // ==========================================
@@ -607,20 +942,26 @@
       this.vz += nz * pImpulse * 0.45;
       this.speed *= (m1 > m2 ? 0.7 : 0.2); // Heavy car keeps more speed!
 
+      // Off-center angular spin torque
+      this.spinVy += (Math.random() - 0.5) * pImpulse * 0.35;
+
       otherCar.vx -= nx * oImpulse * 0.5;
       otherCar.vz -= nz * oImpulse * 0.5;
 
       // Screen shake proportional to impact force on player
       this.screenShake = Math.min(1.4, pImpulse * 0.08);
 
-      // Sparks
-      for (let i = 0; i < 16; i++) {
-        this.spawnParticle((this.x + otherCar.x) / 2, 1.2, (this.z + otherCar.z) / 2, [0xffcc00, 0xff3344, 0xffffff]);
+      // Metal shards, glass debris & sparks
+      for (let i = 0; i < 20; i++) {
+        this.spawnParticle((this.x + otherCar.x) / 2, 0.8, (this.z + otherCar.z) / 2, [0xffcc00, 0xdddddd, 0x334155, 0xff0044]);
       }
 
       // Damage calculation (reduces health, but NO GAME OVER)
       const damage = Math.round((impulse / m1) * 2.5);
       this.health = Math.max(5, this.health - damage); // Never drops below 5%, no game over!
+
+      // Visual battle damage deformation
+      Models3D.updateDamageDeformation(this.playerMesh, this.health);
 
       if (m1 > m2 * 2) {
         this.showQuip(`💥 বড় গাড়ির ধাক্কা! ${otherCar.type} ছিটকে গেলো! (+${Math.round(impulse * 0.1)} pts)`);
@@ -641,14 +982,16 @@
       this.vz += nz * (hitSpeed * 0.5 + 4);
       this.speed *= -0.35;
 
+      this.spinVy += (Math.random() - 0.5) * hitSpeed * 0.22;
       this.screenShake = Math.min(1.2, hitSpeed * 0.05);
 
-      for (let i = 0; i < 15; i++) {
-        this.spawnParticle(this.x + nx * 1.6, 1.2, this.z + nz * 1.6, [0xffcc00, 0xff0055, 0xffffff]);
+      for (let i = 0; i < 18; i++) {
+        this.spawnParticle(this.x + nx * 1.6, 1.2, this.z + nz * 1.6, [0xffcc00, 0xff0055, 0x94a3b8, 0xffffff]);
       }
 
       // Take damage but NEVER game over!
       this.health = Math.max(5, this.health - Math.round(hitSpeed * 0.6));
+      Models3D.updateDamageDeformation(this.playerMesh, this.health);
       this.showQuip('🚨 দেয়ালে ক্র্যাশ! মেরামত কিট তুলে নতুন হয়ে যান!');
     }
 
@@ -762,6 +1105,7 @@
 
             if (p.type === 'repair') {
               this.health = 100; // BRAND NEW AGAIN!
+              Models3D.updateDamageDeformation(this.playerMesh, 100);
               this.showQuip('🛠️ মেরামত কিট পেলেন! গাড়ি একদম নতুনের মতো (100% Brand New)! ✨');
             } else if (p.type === 'coin') {
               this.score += 250;
@@ -941,7 +1285,23 @@
 
       let currentTurn = turnRate * (this.keys.drift ? 1.55 : 1.0);
       const speedRatio = Math.min(1.0, Math.abs(this.speed) / (maxSpeed * 0.4));
-      this.angle += this.steerAngle * currentTurn * speedRatio * dt * (this.speed >= 0 ? 1 : -1);
+
+      // Suspension pitch (dive on brake, squat on accel)
+      if (this.keys.forward) {
+        this.pitch = this.pitch * 0.85 + (-0.038 * (this.speed / maxSpeed)) * 0.15;
+      } else if (this.keys.backward && Math.abs(this.speed) > 4) {
+        this.pitch = this.pitch * 0.85 + (0.065 * Math.min(1.0, Math.abs(this.speed) / 20)) * 0.15;
+      } else {
+        this.pitch *= 0.88;
+      }
+
+      // Suspension roll (body roll on turns and drifts)
+      const rollTarget = -this.steerAngle * 0.14 * Math.min(1.0, Math.abs(this.speed) / 22);
+      this.roll = this.roll * 0.82 + rollTarget * 0.18;
+
+      // Angular spin momentum from off-center impacts
+      this.angle += (this.steerAngle * currentTurn * speedRatio + this.spinVy) * dt * (this.speed >= 0 ? 1 : -1);
+      this.spinVy *= Math.pow(0.85, dt * 60);
 
       // Drift & Lateral grip
       const forwardX = Math.sin(this.angle);
@@ -966,20 +1326,32 @@
         this.playerMesh.wheels.forEach(w => w.rotation.x += this.speed * dt * 2.5);
       }
 
-      // Drift smoke
-      if (this.keys.drift && Math.abs(this.speed) > 10) {
-        this.spawnParticle(this.x, 0.3, this.z, [0xcccccc, 0x888888]);
+      // Drift smoke & Tire Screech Audio
+      if ((this.keys.drift || (this.keys.backward && Math.abs(this.speed) > 15)) && Math.abs(this.speed) > 10) {
+        window.soundEngine.playTireScreech();
+        this.spawnParticle(this.x, 0.25, this.z, [0xbbbbbb, 0x888888]);
       }
 
-      // Low health smoke puffs
-      if (this.health < 35 && Math.random() < 0.2) {
-        this.spawnParticle(this.x, 1.2, this.z, [0x333333, 0x555555]);
+      // High-damage smoke, steam & fiery embers
+      if (this.health < 65 && Math.random() < 0.22) {
+        this.spawnParticle(this.x + forwardX * 1.8, 1.1, this.z + forwardZ * 1.8, [0xeeeeee, 0xd4d4d8]);
+      }
+      if (this.health < 40 && Math.random() < 0.35) {
+        this.spawnParticle(this.x, 1.2, this.z, [0x18181b, 0x3f3f46]);
+      }
+      if (this.health < 20 && Math.random() < 0.38) {
+        this.spawnParticle(this.x + forwardX * 1.2, 0.9, this.z + forwardZ * 1.2, [0xff3300, 0xff9900, 0xffcc00]);
       }
 
       if (this.playerMesh) {
         this.playerMesh.position.set(this.x, 0, this.z);
         this.playerMesh.rotation.y = this.angle;
+        this.playerMesh.rotation.x = this.pitch;
+        this.playerMesh.rotation.z = this.roll;
       }
+
+      // Visual battle damage deformation
+      Models3D.updateDamageDeformation(this.playerMesh, this.health);
 
       // Collision with 3D buildings, pillars, and Hatirjheel Lake barriers
       const col = City3D.checkCollision(this.x, this.z, 2.2);
@@ -1015,6 +1387,31 @@
       this.updatePickups(dt);
       this.updateMissions(dt);
       this.updateParticles(dt);
+
+      // Send LAN multiplayer state (20 updates/second)
+      this.lanSendTimer += dt;
+      if (this.lanSendTimer >= 0.05) {
+        this.lanSendTimer = 0;
+        if (this.lanWs && this.lanWs.readyState === 1) { // 1 = OPEN
+          const car = CARS[this.selectedCarIndex];
+          this.lanWs.send(JSON.stringify({
+            type: 'UPDATE',
+            x: this.x,
+            z: this.z,
+            angle: this.angle,
+            speed: this.speed,
+            carType: car.modelType,
+            health: this.health,
+            pitch: this.pitch,
+            roll: this.roll,
+            steer: this.steerAngle,
+            nitro: this.nitroActive
+          }));
+        }
+      }
+
+      this.updateRemotePlayers(dt);
+      this.updatePvPCollisions();
 
       if (Math.random() < 0.002 && !this.quipBanner.classList.contains('show')) {
         const randQuip = QUIPS[Math.floor(Math.random() * QUIPS.length)];
@@ -1187,6 +1584,14 @@
         m.fillRect((car.x + halfW) * scale - 1, (car.z + halfW) * scale - 1, 3, 3);
       });
 
+      // Remote LAN Players on Minimap (Cyan Circles)
+      this.remotePlayers.forEach(remote => {
+        m.fillStyle = '#00f0ff';
+        m.beginPath();
+        m.arc((remote.mesh.position.x + halfW) * scale, (remote.mesh.position.z + halfW) * scale, 3.8, 0, Math.PI * 2);
+        m.fill();
+      });
+
       // Mission destination
       if (this.currentMission) {
         m.fillStyle = '#facc15';
@@ -1215,7 +1620,9 @@
       this.lastTime = currentTime;
 
       try {
-        this.update(dt);
+        if (!this.isPaused) {
+          this.update(dt);
+        }
         if (this.renderer && this.scene && this.camera) {
           this.renderer.render(this.scene, this.camera);
         }

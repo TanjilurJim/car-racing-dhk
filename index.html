@@ -33,6 +33,12 @@
           <span class="hud-label">MISSION TIME</span>
           <span id="time-val" class="hud-value neon-gold">--:--</span>
         </div>
+
+        <!-- Pause Button (ESC Key or Touch Tap) -->
+        <button id="btn-pause" class="hud-card pause-btn" title="Pause Game [ESC]">
+          <span class="pause-icon">⏸️</span>
+          <span class="hud-label">PAUSE [ESC]</span>
+        </button>
       </div>
 
       <!-- Navigation Compass Arrow to Current Objective -->
@@ -151,6 +157,19 @@
           </div>
         </div>
 
+        <!-- LAN Multiplayer Invite Row -->
+        <div class="start-lan-card">
+          <div class="start-lan-header">
+            <span>👥 LAN MULTIPLAYER (ল্যান রেস)</span>
+            <span id="start-lan-badge" class="lan-badge-active">🟢 LAN READY</span>
+          </div>
+          <div class="lan-link-row">
+            <input type="text" id="start-lan-input" readonly value="http://localhost:3000" class="lan-input">
+            <button id="btn-start-copy-lan" class="btn-copy">📋 COPY LINK</button>
+          </div>
+          <span class="lan-hint">Invite friends on the same Wi-Fi to join and smash cars together in PvP!</span>
+        </div>
+
         <button id="btn-start" class="btn-primary-action pulse">
           ENTER 3D DHAKA (শহরে প্রবেশ করুন)
         </button>
@@ -161,6 +180,61 @@
             <span class="slider round"></span>
           </label>
           <span class="audio-label">Dhaka FM Beat & Sound FX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Menu Modal (Triggered by ESC key or Pause button) -->
+    <div id="pause-modal" class="screen-modal hidden">
+      <div class="glass-panel pause-box">
+        <div class="badge-tag">GAME PAUSED • খেলা স্থগিত</div>
+        <h2 class="game-title">PAUSED</h2>
+        <p class="flavor-text">Press <strong>[ESC]</strong> or click Resume to continue driving.</p>
+
+        <!-- Current Stats Grid -->
+        <div class="pause-stats-grid">
+          <div class="stat-cell">
+            <span class="cell-label">CURRENT ROAD</span>
+            <span id="pause-street-val" class="cell-val neon-cyan">KAZI NAZRUL ISLAM AVE</span>
+          </div>
+          <div class="stat-cell">
+            <span class="cell-label">SPEED</span>
+            <span id="pause-speed-val" class="cell-val">0 KM/H</span>
+          </div>
+          <div class="stat-cell">
+            <span class="cell-label">CAR INTEGRITY</span>
+            <span id="pause-health-val" class="cell-val status-brand-new">100% BRAND NEW</span>
+          </div>
+          <div class="stat-cell">
+            <span class="cell-label">SCORE</span>
+            <span id="pause-score-val" class="cell-val neon-gold">0</span>
+          </div>
+        </div>
+
+        <!-- LAN Multiplayer Invite Section -->
+        <div class="lan-invite-card">
+          <div class="lan-header">
+            <span class="lan-badge">👥 LAN MULTIPLAYER (ল্যান রেস)</span>
+            <span id="lan-status-tag" class="lan-status-tag">🟢 ACTIVE</span>
+          </div>
+          <p class="lan-subtext">Share this link with anyone on your Wi-Fi to race & ram together:</p>
+          <div class="lan-link-row">
+            <input type="text" id="lan-link-input" readonly value="http://localhost:3000" class="lan-input">
+            <button id="btn-copy-lan" class="btn-copy">📋 COPY LINK</button>
+          </div>
+          <div class="lan-players-row">
+            <span id="lan-players-info">Connected Racers: <strong id="lan-count">1</strong> online</span>
+          </div>
+        </div>
+
+        <!-- Pause Action Buttons -->
+        <div class="pause-actions">
+          <button id="btn-resume" class="btn-primary-action pulse">▶ RESUME RACE (চালিয়ে যান)</button>
+          <div class="pause-sub-buttons">
+            <button id="btn-restart" class="btn-secondary">🔄 RESTART</button>
+            <button id="btn-pause-cam" class="btn-secondary">🎥 CAMERA VIEW</button>
+            <button id="btn-service" class="btn-secondary">🛠️ FULL SERVICE (100% HP)</button>
+          </div>
         </div>
       </div>
     </div>

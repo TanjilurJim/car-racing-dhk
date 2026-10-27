@@ -153,6 +153,18 @@ const Models3D = {
     body.castShadow = true;
     car.add(body);
 
+    // Front Bumper (Impact deforms on crashes!)
+    const bumperMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(width * 1.04, height * 0.22, 0.35), bumperMat);
+    frontBumper.position.set(0, height * 0.22, length / 2 + 0.16);
+    frontBumper.castShadow = true;
+    car.add(frontBumper);
+
+    // Hood (Buckles open on heavy crash!)
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(width * 0.94, 0.08, length * 0.32), paintMat);
+    hood.position.set(0, height * 0.47, length * 0.28);
+    car.add(hood);
+
     // Cabin Glass
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(width * 0.88, height * 0.52, length * (isSuv ? 0.68 : 0.52)), this.materials.glass);
     cabin.position.set(0, height * 0.72, isSuv ? -0.2 : -0.3);
@@ -167,6 +179,11 @@ const Models3D = {
     rightHL.position.set(width * 0.36, height * 0.45, length / 2 + 0.02);
     car.add(leftHL);
     car.add(rightHL);
+
+    car.frontBumper = frontBumper;
+    car.hood = hood;
+    car.leftHL = leftHL;
+    car.rightHL = rightHL;
 
     // Taillights
     const tlGeo = new THREE.BoxGeometry(0.32, 0.16, 0.1);
@@ -538,6 +555,84 @@ const Models3D = {
     tree.add(c2);
 
     return tree;
+  },
+
+  // ==========================================
+  // REALISTIC VEHICLE DAMAGE DEFORMATION
+  // ==========================================
+  updateDamageDeformation(carMesh, health) {
+    if (!carMesh) return;
+    this.initMaterials();
+
+    if (health <= 75) {
+      if (carMesh.frontBumper) carMesh.frontBumper.rotation.x = -0.15;
+    }
+    if (health <= 50) {
+      if (carMesh.hood) carMesh.hood.rotation.x = 0.22;
+      if (carMesh.leftHL) carMesh.leftHL.material = this.materials.rubber;
+    }
+    if (health <= 25) {
+      if (carMesh.frontBumper) carMesh.frontBumper.rotation.z = 0.14;
+    }
+    if (health >= 90) {
+      if (carMesh.frontBumper) carMesh.frontBumper.rotation.set(0, 0, 0);
+      if (carMesh.hood) carMesh.hood.rotation.set(0, 0, 0);
+      if (carMesh.leftHL) carMesh.leftHL.material = this.materials.headlight;
+      if (carMesh.rightHL) carMesh.rightHL.material = this.materials.headlight;
+    }
+  },
+
+  // ==========================================
+  // 3D FLOATING PLAYER NAME TAG BILLBOARD (LAN)
+  // ==========================================
+  createPlayerNameTag(name = 'RACER', color = '#00f0ff') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    const renderTag = (currentName, healthPct) => {
+      ctx.clearRect(0, 0, 256, 64);
+
+      // Background panel
+      ctx.fillStyle = 'rgba(12, 18, 32, 0.88)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(6, 6, 244, 52, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Player Name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(currentName, 128, 30);
+
+      // Health bar
+      const barW = 200;
+      const barH = 7;
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(28, 39, barW, barH);
+
+      ctx.fillStyle = healthPct > 55 ? '#00e676' : (healthPct > 28 ? '#facc15' : '#ef4444');
+      ctx.fillRect(28, 39, barW * (Math.max(0, healthPct) / 100), barH);
+    };
+
+    renderTag(name, 100);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(4.8, 1.2, 1);
+    sprite.position.y = 2.9;
+
+    sprite.updateNameTag = (newName, newHealth) => {
+      renderTag(newName, newHealth);
+      texture.needsUpdate = true;
+    };
+
+    return sprite;
   }
 };
 
