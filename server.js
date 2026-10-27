@@ -445,7 +445,7 @@ function checkAndTriggerRace(force = false) {
     lastRaceTriggerTime = now;
     console.log(`[LAN RACE] Triggering head-to-head race with ${raceRacers.length} racers!`);
 
-    broadcast({
+    const raceEvent = {
       type: 'RACE_COUNTDOWN_START',
       racers: raceRacers.map((rp, idx) => ({
         id: rp.id,
@@ -454,7 +454,14 @@ function checkAndTriggerRace(force = false) {
         gridIndex: idx,
         gridPos: GRID_SPOTS[idx % GRID_SPOTS.length]
       }))
-    });
+    };
+
+    // Send ONLY to racers in RACE_COMBAT mode so Open World players are undisturbed!
+    for (const rp of raceRacers) {
+      if (rp.socket && !rp.socket.destroyed) {
+        sendWsMessage(rp.socket, raceEvent);
+      }
+    }
   }
 }
 

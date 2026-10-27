@@ -635,6 +635,9 @@
         if (raceCard) raceCard.classList.add('hidden');
         if (jobBtn) jobBtn.style.display = 'block';
         this.raceActive = false;
+        this.raceCountdown = -1;
+        const overlay = document.getElementById('countdown-overlay');
+        if (overlay) overlay.classList.add('hidden');
         if (this.aiRival && this.aiRival.mesh) {
           this.scene.remove(this.aiRival.mesh);
           this.aiRival = null;
@@ -802,7 +805,9 @@
           }
         }
       } else if (msg.type === 'RACE_COUNTDOWN_START') {
-        this.startRaceCountdown(msg.racers);
+        if (this.gameMode === 'RACE_COMBAT') {
+          this.startRaceCountdown(msg.racers);
+        }
       } else if (msg.type === 'ROCKET_FIRED') {
         this.spawnRemoteRocket(msg);
       } else if (msg.type === 'MINE_DROPPED') {
@@ -2100,8 +2105,8 @@
 
       const effectiveMaxSpeed = maxSpeed * (this.nitroActive ? car.nitroPower : 1.0);
 
-      // Gas / Reverse (Input locked during 3-2-1 race countdown)
-      if (this.raceCountdown > 0) {
+      // Gas / Reverse (Input locked only during 3-2-1 race countdown in Race mode)
+      if (this.gameMode === 'RACE_COMBAT' && this.raceCountdown > 0) {
         this.speed = 0;
         this.vx = 0;
         this.vz = 0;

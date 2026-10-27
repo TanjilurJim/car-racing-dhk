@@ -14,7 +14,8 @@ if %ERRORLEVEL% equ 0 (
   :: Check if server is already running on port 3000
   netstat -ano | findstr :3000 >nul 2>nul
   if %ERRORLEVEL% neq 0 (
-    start "Dhaka 3D LAN Server" node server.js
+    echo Starting persistent LAN server in background window...
+    start "Dhaka 3D LAN Server" cmd /k "title Dhaka 3D LAN Server && node server.js"
     timeout /t 2 >nul
   ) else (
     echo Server is already active on port 3000!
