@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DHAKA CITY 3D - ঢাকা সিটি রেসার (True 3D View)</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,9 +24,9 @@
         </div>
 
         <div class="hud-card mission-box" id="mission-card">
-          <span class="hud-label" id="mission-label">CURRENT STREET</span>
+          <span class="hud-label" id="mission-label">CURRENT ROAD</span>
           <span id="street-name-val" class="hud-value neon-cyan">KAZI NAZRUL ISLAM AVE</span>
-          <div class="mission-subtext" id="mission-subtext">Free Roaming 3D Dhaka (Invincible Mode 🛡️)</div>
+          <div class="mission-subtext" id="mission-subtext">Free Roaming 3D Dhaka (Hatirjheel & Metro)</div>
         </div>
 
         <div class="hud-card time-box">
@@ -46,8 +46,8 @@
 
       <!-- Minimap Radar (Top-Right Floating) -->
       <div id="minimap-container">
-        <canvas id="minimap" width="160" height="160"></canvas>
-        <div class="minimap-label">DHAKA 3D GPS RADAR</div>
+        <canvas id="minimap" width="140" height="140"></canvas>
+        <div class="minimap-label">DHAKA GPS RADAR</div>
       </div>
 
       <!-- Bottom HUD Controls & Telemetry -->
@@ -64,7 +64,7 @@
         <!-- Center Actions & Hints -->
         <div class="action-cluster">
           <button id="btn-job" class="hud-action-btn">🚖 START TAXI JOB</button>
-          <div class="horn-hint-pill">[H] HONK TO CLEAR TRAFFIC! • [SPACE] DRIFT</div>
+          <div class="horn-hint-pill">[H] HONK TO CLEAR TRAFFIC! • [SPACE] DRIFT • [C] CAMERA</div>
         </div>
 
         <!-- Nitro Boost Gauge & Vehicle Status -->
@@ -81,17 +81,17 @@
 
           <div class="health-wrapper">
             <div class="health-label">
-              <span>🛡️ CAR STATUS</span>
-              <span id="health-val" class="status-invincible">NO DAMAGE CAP (INDESTRUCTIBLE)</span>
+              <span>🛠️ CAR INTEGRITY</span>
+              <span id="health-val" class="status-brand-new">100% BRAND NEW</span>
             </div>
             <div class="health-bar-bg">
-              <div class="health-bar-fill" style="width: 100%;"></div>
+              <div id="health-bar-fill" class="health-bar-fill"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Touch Controls (For tablets / touch screens) -->
+      <!-- Mobile / Tablet On-Screen Touch Controls -->
       <div id="touch-controls">
         <div class="touch-left-cluster">
           <button id="btn-left" class="touch-btn">◀</button>
@@ -100,9 +100,10 @@
         <div class="touch-center-cluster">
           <button id="btn-horn" class="touch-btn horn-btn">📢 HONK</button>
           <button id="btn-drift" class="touch-btn drift-btn">💨 DRIFT</button>
+          <button id="btn-cam" class="touch-btn cam-btn">🎥 CAM</button>
         </div>
         <div class="touch-right-cluster">
-          <button id="btn-brake" class="touch-btn brake-btn">🛑 REVERSE</button>
+          <button id="btn-brake" class="touch-btn brake-btn">🛑 REV</button>
           <button id="btn-gas" class="touch-btn gas-btn">⚡ GAS</button>
           <button id="btn-nitro" class="touch-btn nitro-btn">🔥 NITRO</button>
         </div>
@@ -112,14 +113,14 @@
     <!-- Start / Vehicle Select Screen -->
     <div id="start-screen" class="screen-modal">
       <div class="start-box glass-panel">
-        <div class="badge-tag">TRUE 3D CHASE-CAM RACING • NO DAMAGE CAP</div>
+        <div class="badge-tag">DHAKA CITY 3D • FULL CONNECTED OPEN ROADS</div>
         <h1 class="game-title">DHAKA CITY 3D</h1>
         <h2 class="sub-title">ঢাকা সিটি রেসার ৩ডি : ফুল থ্রিডি ভিউ</h2>
         
         <p class="flavor-text">
-          Experience Dhaka from a true 3D chase camera perspective! Race past 3D skyscrapers, drift through 
-          4-way intersections and Shapla Chottor roundabout, pass under the Metro Rail viaduct, and dodge 3D rickshaws.
-          <br><strong>Damage cap removed: Your car is indestructible — crash, drift, and explore endlessly!</strong>
+          Experience Dhaka in full 3D! Drive along Hatirjheel Lake, zoom under the elevated Metro Rail viaduct,
+          drift through 4-way intersections and Shapla Chottor, dodge Dhaka buses, Laguna, Pathao bikes, CNGs, and cycle rickshaws!
+          <br><strong>Pick up repair kits 🛠️ and coins 🪙 to stay brand new! No game over death!</strong>
         </p>
 
         <!-- Vehicle Selection Carousel -->
@@ -128,7 +129,7 @@
           <div class="vehicle-carousel">
             <button class="nav-arrow" id="prev-car">❮</button>
             <div class="vehicle-card" id="vehicle-card">
-              <canvas id="vehicle-preview" width="220" height="120"></canvas>
+              <canvas id="vehicle-preview" width="220" height="110"></canvas>
               <div class="vehicle-info">
                 <h3 id="car-name">TOYOTA PREMIO 1.5</h3>
                 <span id="car-nickname" class="car-nickname">"The Dhaka Corporate Rocket"</span>
@@ -137,12 +138,12 @@
                   <div class="stat-bar"><div id="stat-speed" class="stat-fill" style="width: 80%"></div></div>
                 </div>
                 <div class="stat-row">
-                  <span>3D Handling:</span>
-                  <div class="stat-bar"><div id="stat-handling" class="stat-fill" style="width: 85%"></div></div>
+                  <span>Mass / Weight:</span>
+                  <div class="stat-bar"><div id="stat-armor" class="stat-fill" style="width: 60%"></div></div>
                 </div>
                 <div class="stat-row">
-                  <span>Durability:</span>
-                  <div class="stat-bar"><div id="stat-armor" class="stat-fill" style="width: 100%"></div></div>
+                  <span>Handling:</span>
+                  <div class="stat-bar"><div id="stat-handling" class="stat-fill" style="width: 85%"></div></div>
                 </div>
               </div>
             </div>
@@ -150,39 +151,8 @@
           </div>
         </div>
 
-        <!-- Mode Selection -->
-        <div class="mode-select-row">
-          <button class="mode-btn active" id="mode-free">🗺️ 3D FREE ROAM (অফুরন্ত ড্রাইভ)</button>
-          <button class="mode-btn" id="mode-taxi">🚖 3D TAXI MISSIONS (ভাড়া ও ড্রপ-অফ)</button>
-        </div>
-
-        <!-- Controls Guide -->
-        <div class="instructions-panel">
-          <div class="instruction-item">
-            <span class="key-pill">▲ / W</span> Accelerate Forward
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">▼ / S</span> Brake / Reverse
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">◀ ▶ / A D</span> Steer & Turn onto Blocks
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">SPACE</span> Handbrake 3D Drift Around Corners
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">H</span> Dhaka Horn (Rickshaws move aside!)
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">SHIFT</span> Nitro CNG Turbo
-          </div>
-          <div class="instruction-item">
-            <span class="key-pill">C</span> Toggle Camera View (Chase / Cockpit)
-          </div>
-        </div>
-
         <button id="btn-start" class="btn-primary-action pulse">
-          START 3D ENGINE (চালু করুন)
+          ENTER 3D DHAKA (শহরে প্রবেশ করুন)
         </button>
 
         <div class="audio-toggle-row">

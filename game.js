@@ -140,9 +140,9 @@
 
     initThree() {
       this.scene = new THREE.Scene();
-      this.scene.background = new THREE.Color(0x101626);
-      // Light atmospheric fog so entire city and roads remain visible
-      this.scene.fog = new THREE.FogExp2(0x101626, 0.0012);
+      this.scene.background = new THREE.Color(0x1a1528);
+      // Soft atmospheric twilight fog so distant buildings and sky stay visible
+      this.scene.fog = new THREE.FogExp2(0x1a1528, 0.00075);
 
       const aspect = window.innerWidth / window.innerHeight;
       this.camera = new THREE.PerspectiveCamera(60, aspect, 0.5, 2000);
@@ -155,17 +155,17 @@
       this.container.appendChild(this.renderer.domElement);
 
       // Ambient & Directional Lighting
-      const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x111625, 0.75);
+      const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x241d3b, 0.85);
       this.scene.add(hemiLight);
 
-      this.dirLight = new THREE.DirectionalLight(0xffb74d, 0.95);
-      this.dirLight.position.set(160, 220, 120);
+      this.dirLight = new THREE.DirectionalLight(0xffa347, 1.1);
+      this.dirLight.position.set(180, 240, 140);
       this.dirLight.castShadow = true;
       this.dirLight.shadow.mapSize.width = 2048;
       this.dirLight.shadow.mapSize.height = 2048;
       this.dirLight.shadow.camera.near = 10;
       this.dirLight.shadow.camera.far = 600;
-      const d = 220;
+      const d = 240;
       this.dirLight.shadow.camera.left = -d;
       this.dirLight.shadow.camera.right = d;
       this.dirLight.shadow.camera.top = d;
@@ -295,6 +295,18 @@
       bindTouch('btn-drift', 'drift');
       bindTouch('btn-nitro', 'nitro');
       bindTouch('btn-horn', 'horn', () => this.triggerHorn());
+
+      // Mobile Touch Camera Toggle
+      const camBtn = document.getElementById('btn-cam');
+      if (camBtn) {
+        const toggleCam = (e) => {
+          e.preventDefault();
+          this.cameraMode = this.cameraMode === 'CHASE' ? 'HOOD' : 'CHASE';
+          this.showQuip(`Camera switched to ${this.cameraMode} View! 🎥`);
+        };
+        camBtn.addEventListener('click', toggleCam);
+        camBtn.addEventListener('touchstart', toggleCam, { passive: false });
+      }
     }
 
     changeCar(delta) {
@@ -373,35 +385,58 @@
     }
 
     // ==========================================
-    // 3D TRAFFIC WITH REALISTIC MASSES
+    // 3D TRAFFIC WITH DIVERSE BANGLADESHI VEHICLES
     // ==========================================
     spawn3DTraffic() {
       this.traffic = [];
 
-      // Avenues traffic
+      // Avenues traffic (Mirpur, Nazrul Islam, Satmasjid, Gulshan)
       City3D.avenues.forEach(ave => {
         [-1, 1].forEach(dir => {
-          for (let i = 0; i < 2; i++) {
+          for (let i = 0; i < 3; i++) {
             const laneX = ave.x + (dir * ave.width * 0.25);
-            const z = (i * 260) - 200 + (Math.random() * 60 - 30);
+            const z = (i * 240) - 260 + (Math.random() * 50 - 25);
 
-            let mesh, type, speed, mass;
+            let mesh, type, speed, mass, radius;
             const rand = Math.random();
-            if (rand < 0.4) {
+
+            if (rand < 0.22) {
+              // Cycle Rickshaw with puller & hood art
               mesh = Models3D.createRickshawModel();
               type = 'Rickshaw';
-              speed = 5.5;
-              mass = 120; // super light!
-            } else if (rand < 0.75) {
+              speed = 6.0;
+              mass = 120; // light
+              radius = 1.4;
+            } else if (rand < 0.42) {
+              // Delivery Motorbike (Pathao / Foodpanda)
+              const isPathao = Math.random() > 0.5;
+              mesh = Models3D.createMotorbikeModel(isPathao);
+              type = isPathao ? 'Pathao Bike' : 'Foodpanda Bike';
+              speed = 22.0; // fast & agile!
+              mass = 220;
+              radius = 1.2;
+            } else if (rand < 0.65) {
+              // Green Auto Rickshaw (CNG)
               mesh = Models3D.createCngModel(false);
               type = 'CNG';
-              speed = 13.0;
-              mass = 420;
+              speed = 14.0;
+              mass = 450;
+              radius = 1.6;
+            } else if (rand < 0.82) {
+              // Dhaka Laguna / Human Hauler (লেগুনা)
+              mesh = Models3D.createLagunaModel();
+              type = 'Laguna';
+              speed = 17.0;
+              mass = 2100;
+              radius = 2.4;
             } else {
-              mesh = Models3D.createBusModel('shikhor');
+              // Heavy Dhaka Local Bus (Shikhor / Balaka / Bikolpo)
+              const busNames = ['shikhor', 'balaka', 'bikolpo'];
+              mesh = Models3D.createBusModel(busNames[Math.floor(Math.random() * busNames.length)]);
               type = 'Bus';
-              speed = 16.0;
-              mass = 8500; // massive bus!
+              speed = 15.5;
+              mass = 8500; // massive juggernaut!
+              radius = 4.4;
             }
 
             mesh.position.set(laneX, 0, z);
@@ -422,7 +457,7 @@
               baseSpeed: speed,
               mass: mass,
               type: type,
-              radius: type === 'Bus' ? 4.2 : 1.6,
+              radius: radius,
               honkedTimer: 0,
               spinAngle: 0
             });
@@ -430,40 +465,69 @@
         });
       });
 
-      // Streets traffic
+      // Cross Streets traffic (Airport Rd, Panthapath, Dhanmondi 27, Old Dhaka)
       City3D.streets.forEach(str => {
         [-1, 1].forEach(dir => {
-          const laneZ = str.z + (dir * str.width * 0.25);
-          const x = (Math.random() * 400 - 200);
+          for (let k = 0; k < 2; k++) {
+            const laneZ = str.z + (dir * str.width * 0.25);
+            const x = (k * 300) - 150 + (Math.random() * 60 - 30);
 
-          const isBus = Math.random() > 0.5;
-          const mesh = isBus ? Models3D.createBusModel('balaka') : Models3D.createCngModel(false);
-          const type = isBus ? 'Bus' : 'CNG';
-          const speed = isBus ? 16.0 : 13.0;
-          const mass = isBus ? 8500 : 420;
+            let mesh, type, speed, mass, radius;
+            const rand = Math.random();
 
-          mesh.position.set(x, 0, laneZ);
-          mesh.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-          this.scene.add(mesh);
+            if (rand < 0.3) {
+              // Delivery Motorbike
+              mesh = Models3D.createMotorbikeModel(true);
+              type = 'Pathao Bike';
+              speed = 22.0;
+              mass = 220;
+              radius = 1.2;
+            } else if (rand < 0.6) {
+              // CNG
+              mesh = Models3D.createCngModel(false);
+              type = 'CNG';
+              speed = 14.0;
+              mass = 450;
+              radius = 1.6;
+            } else if (rand < 0.82) {
+              // Laguna
+              mesh = Models3D.createLagunaModel();
+              type = 'Laguna';
+              speed = 17.0;
+              mass = 2100;
+              radius = 2.4;
+            } else {
+              // Bus
+              mesh = Models3D.createBusModel('balaka');
+              type = 'Bus';
+              speed = 15.5;
+              mass = 8500;
+              radius = 4.4;
+            }
 
-          this.traffic.push({
-            mesh: mesh,
-            x: x,
-            z: laneZ,
-            vx: dir * speed,
-            vz: 0,
-            dirZ: 0,
-            dirX: dir,
-            isAvenue: false,
-            street: str,
-            speed: speed,
-            baseSpeed: speed,
-            mass: mass,
-            type: type,
-            radius: isBus ? 4.2 : 1.6,
-            honkedTimer: 0,
-            spinAngle: 0
-          });
+            mesh.position.set(x, 0, laneZ);
+            mesh.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+            this.scene.add(mesh);
+
+            this.traffic.push({
+              mesh: mesh,
+              x: x,
+              z: laneZ,
+              vx: dir * speed,
+              vz: 0,
+              dirZ: 0,
+              dirX: dir,
+              isAvenue: false,
+              street: str,
+              speed: speed,
+              baseSpeed: speed,
+              mass: mass,
+              type: type,
+              radius: radius,
+              honkedTimer: 0,
+              spinAngle: 0
+            });
+          }
         });
       });
     }
@@ -588,6 +652,96 @@
       this.showQuip('🚨 দেয়ালে ক্র্যাশ! মেরামত কিট তুলে নতুন হয়ে যান!');
     }
 
+    // Collision with Hatirjheel Lake stone promenade railings (Water bounce)
+    handleLakeCollision(nx, nz) {
+      if (window.soundEngine.playSplash) {
+        window.soundEngine.playSplash();
+      } else {
+        window.soundEngine.playCrash();
+      }
+
+      const hitSpeed = Math.abs(this.speed);
+      this.vx += nx * (hitSpeed * 0.6 + 5);
+      this.vz += nz * (hitSpeed * 0.6 + 5);
+      this.speed *= -0.3;
+
+      this.screenShake = Math.min(1.2, hitSpeed * 0.05);
+
+      // Water spray particles
+      for (let i = 0; i < 24; i++) {
+        this.spawnParticle(this.x + nx * 1.5, 1.0, this.z + nz * 1.5, [0x0284c7, 0x38bdf8, 0xffffff, 0x7dd3fc]);
+      }
+
+      this.health = Math.max(5, this.health - 6);
+      this.showQuip('🌊 হাতিরঝিল লেক প্রমেনেড! পানিতে পড়ার আগেই রেলিংয়ে আটকে গেলেন!');
+    }
+
+    // ==========================================
+    // 3D WALKING PEDESTRIANS UPDATE LOOP
+    // ==========================================
+    updatePedestrians(dt) {
+      if (!City3D.pedestrians) return;
+
+      City3D.pedestrians.forEach(p => {
+        if (p.scaredTimer > 0) {
+          p.scaredTimer -= dt;
+          // Panic sprint when honked!
+          p.walkAnim += dt * p.speed * 8.0;
+          if (p.dirZ !== 0) {
+            p.z += p.dirZ * p.speed * 2.2 * dt;
+            p.x += (p.x > p.baseX ? 2.8 : -2.8) * dt;
+          } else {
+            p.x += p.dirX * p.speed * 2.2 * dt;
+          }
+        } else {
+          p.walkAnim += dt * p.speed * 3.8;
+          if (p.dirZ !== 0) {
+            p.z += p.dirZ * p.speed * dt;
+            p.x += (p.baseX - p.x) * 0.1;
+          } else {
+            p.x += p.dirX * p.speed * dt;
+          }
+        }
+
+        // Animate legs swinging
+        if (p.mesh.leftLeg && p.mesh.rightLeg) {
+          p.mesh.leftLeg.rotation.x = Math.sin(p.walkAnim) * 0.6;
+          p.mesh.rightLeg.rotation.x = -Math.sin(p.walkAnim) * 0.6;
+        }
+
+        // Boundaries wrap-around
+        if (p.dirZ !== 0) {
+          if (p.z > 520) p.z = -520;
+          if (p.z < -520) p.z = 520;
+        } else {
+          if (p.x > 330) p.dirX = -1;
+          if (p.x < 155) p.dirX = 1;
+        }
+
+        p.mesh.position.set(p.x, 0.15, p.z);
+        if (p.dirZ !== 0) {
+          p.mesh.rotation.y = p.dirZ > 0 ? 0 : Math.PI;
+        } else {
+          p.mesh.rotation.y = p.dirX > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
+
+        // Near-miss with player car
+        const pDist = Math.hypot(this.x - p.x, this.z - p.z);
+        if (pDist < 2.5) {
+          p.scaredTimer = 3.0;
+          p.x += (this.x > p.x ? -3.0 : 3.0);
+          if (!this.quipBanner.classList.contains('show')) {
+            const shouts = [
+              '🗣️ পথচারী: "এই ভাই দেখে চালান না! রাস্তা কি বাপের?!"',
+              '🚶‍♂️ পথচারী: "আরে মামা ফুটপাতে গাড়ি উঠান ক্যান?!"',
+              '⚠️ সাবধান! পথচারী প্রায় চাপা পড়ছিলো! নিরাপদে ড্রাইভ করুন!'
+            ];
+            this.showQuip(shouts[Math.floor(Math.random() * shouts.length)]);
+          }
+        }
+      });
+    }
+
     // ==========================================
     // FLOATING PICKUPS (HEALTH, COINS, CHA)
     // ==========================================
@@ -650,15 +804,28 @@
             window.soundEngine.playCngSputter();
             if (car.isAvenue) car.x += (car.x > this.x ? 3.5 : -3.5);
             else car.z += (car.z > this.z ? 3.5 : -3.5);
+          } else if (car.type.includes('Bike')) {
+            if (car.isAvenue) car.x += (car.x > this.x ? 3.0 : -3.0);
+            else car.z += (car.z > this.z ? 3.0 : -3.0);
           } else {
             window.soundEngine.playBusHorn();
           }
         }
       });
 
+      // Pedestrians panic and dodge when honked at!
+      if (City3D.pedestrians) {
+        City3D.pedestrians.forEach(p => {
+          const dist = Math.hypot(this.x - p.x, this.z - p.z);
+          if (dist < 45) {
+            p.scaredTimer = 3.0;
+          }
+        });
+      }
+
       if (count > 0) {
         this.score += count * 80;
-        this.showQuip(`📢 হর্ন শুনে ${count}টি গাড়ি সাইড দিলো! (+${count * 80} pts)`);
+        this.showQuip(`📢 হর্ন শুনে ${count}টি গাড়ি ও পথচারী সাইড দিলো! (+${count * 80} pts)`);
       }
     }
 
@@ -814,10 +981,14 @@
         this.playerMesh.rotation.y = this.angle;
       }
 
-      // Collision with 3D buildings & pillars
+      // Collision with 3D buildings, pillars, and Hatirjheel Lake barriers
       const col = City3D.checkCollision(this.x, this.z, 2.2);
       if (col.collided) {
-        this.handleBuildingCollision(col.nx, col.nz);
+        if (col.isLake) {
+          this.handleLakeCollision(col.nx, col.nz);
+        } else {
+          this.handleBuildingCollision(col.nx, col.nz);
+        }
       }
 
       const kmh = Math.round(Math.abs(this.speed) * 3.6);
@@ -834,7 +1005,13 @@
         if (City3D.metroTrainMesh.position.z > 580) City3D.metroTrainMesh.position.z = -580;
       }
 
+      // Animate Hatirjheel Lake Water Shimmer
+      if (City3D.lakeWaterMesh) {
+        City3D.lakeWaterMesh.position.y = 0.06 + Math.sin(performance.now() * 0.003) * 0.03;
+      }
+
       this.updateTraffic(dt);
+      this.updatePedestrians(dt);
       this.updatePickups(dt);
       this.updateMissions(dt);
       this.updateParticles(dt);
@@ -984,6 +1161,11 @@
       City3D.streets.forEach(str => {
         m.fillRect(10, (str.z + halfW - str.width / 2) * scale, size - 20, str.width * scale);
       });
+
+      // Hatirjheel Lake on Radar (Blue Water)
+      const lk = City3D.lake;
+      m.fillStyle = '#0284c7';
+      m.fillRect((lk.minX + halfW) * scale, (lk.minZ + halfW) * scale, (lk.maxX - lk.minX) * scale, (lk.maxZ - lk.minZ) * scale);
 
       // Shapla Chottor
       m.fillStyle = '#0284c7';
