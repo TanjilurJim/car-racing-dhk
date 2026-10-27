@@ -1,37 +1,37 @@
-# 🏎️ DHAKA STREET RUSH (ঢাকা স্ট্রিট রেসার 3D)
+# 🏙️ DHAKA CITY RUSH (ঢাকা সিটি রেসার - Open City Blocks)
 
-An authentic, adrenaline-fueled retro pseudo-3D highway racing game set on the chaotic, vibrant roads of **Dhaka, Bangladesh**!
+An open-world, multi-block city racing and driving experience set across the streets, avenues, roundabouts, and alleys of **Dhaka, Bangladesh**!
 
 ---
 
-## 🌟 Highlights & Authentic Dhaka Features
+## 🌟 What's New: Full City Block Grid & Intersections
 
-1. **Dhaka Traffic & Obstacles**:
-   - 🛺 **Cycle Rickshaws**: Classic pedal rickshaws with colorful hand-painted hood & backplate art (rickshaw art), tassels, and bells.
-   - 🛺 **Green CNG Auto-Rickshaws**: The famous Dhaka baby-taxis with yellow wire-mesh cages darting unpredictably between lanes.
-   - 🚌 **Local Dhaka Buses**: Iconic dented, brightly painted commuter buses (*শিকড় পরিবহন, বলাকা এক্সপ্রেস, বিকল্প অটো সার্ভিস*) with bumper slogans like *"১০০ হাত দূরে থাকুন"* and *"দূরত্ব বজায় রাখুন"*.
-   - 🚓 **Black VIP SUVs (Prado / Pajero)**: VIP motorcades running with red and blue strobe sirens!
-   - 🚇 **Dhaka Metro Rail (MRT Line 6)**: Massive concrete pillars flanking the road with the sleek green-silver MRT train zooming past overhead!
-   - ☕ **Tong-er Cha Dokan (টং এর চা স্টল)**: Roadside tea stalls with boiling red kettles. Pick up hot **"Doodh Cha" (দুধ চা)** cups on the road for instant health and nitro refills!
-   - 🥥 **Dab (Green Coconut) Carts & Highway Signboards**: Authentic signage for *হাতিরঝিল (Hatirjheel)*, *ফার্মগেট (Farmgate)*, and *বিমানবন্দর (Airport Road)*.
+Instead of a single continuous highway, **Dhaka City Rush** now features an authentic **open city grid**:
 
-2. **The Signature Dhaka "LOUD HORN" Mechanic**:
-   - Press **`SPACE`** or **`H`** to blow your horn!
-   - Rickshaws ring their bells (*"Tring Tring!"*) and green CNGs quickly swerve out of your way to the road shoulder, clearing the lane and earning you bonus points!
+1. **Avenues (North - South)**:
+   - 🚆 **Kazi Nazrul Islam Avenue**: 4-lane major boulevard featuring elevated concrete pillars and the **Dhaka Metro Rail (MRT Line 6)** train zooming overhead!
+   - 🚗 **Mirpur Road**: High-density arterial road with rickshaw lanes and colorful commuter traffic.
+   - 🏬 **Satmasjid Road**: Bustling restaurant & cafe avenue lined with Tong-er Cha stalls.
+   - 🏢 **Gulshan Avenue**: Upscale modern commercial district with corporate skyscrapers and glass towers.
 
-3. **Selectable Bangladeshi Rides**:
-   - 🚗 **Toyota Premio 1.5**: *"The Dhaka Corporate Rocket"* — Balanced speed, responsive handling, and reliability.
-   - 🚕 **Yellow Dhaka Cab**: *"Meter Chara Jabo Na"* — Nimble cornering and quick acceleration.
-   - 🚙 **VIP Black SUV (Prado)**: *"Wrong Side King with Siren"* — Heavy duty, pushes smaller traffic aside, high durability.
-   - 🟢 **Modified Turbo CNG**: *"The 3-Wheeled Green Demon"* — Insane top speed with dual nitro exhausts, high risk & high reward!
+2. **Cross Streets (East - West)**:
+   - ✈️ **Airport Connecting Road**: High-speed northern connector avenue.
+   - 🏥 **Panthapath**: Central corridor connecting east and west Dhaka.
+   - ☕ **Dhanmondi Road 27**: Famous street food & adda hub with tea stalls.
+   - 🕌 **Old Dhaka Heritage Way (পুরান ঢাকা সড়ক)**: Atmospheric historic district with warm brick buildings and narrow alleys.
 
-4. **100% Procedural Web Audio Engine**:
-   - Dynamic engine RPM sound pitch-shifted according to speed and acceleration.
-   - Authentic two-tone Dhaka hydraulic bus horn (*"PAA-POOO!"*).
-   - High-frequency rickshaw brass bell chime.
-   - CNG 2-stroke sputter and nitro thruster whoosh.
-   - Driving chiptune/synthwave background beat.
-   - **Zero external audio downloads required** — operates 100% offline!
+3. **Landmarks & Intersections**:
+   - 🌸 **Shapla Chottor Roundabout**: Iconic circular intersection with a blue water fountain and white water lily petals (*জাতীয় ফুল শাপলা*). Drift smoothly around the circular traffic flow!
+   - 🚏 **4-Way Intersections with Zebra Crossings**: Full turns onto any block, cross-traffic, and pedestrian crossings.
+   - 🏢 **2.5D Extruded Buildings**: Multi-story city buildings with rooftop water tanks, satellite dishes, and authentic Bangladeshi billboards (*বিকাশ, রকমারি, প্রাণ, গ্রামীণফোন, পাঠাও*).
+
+4. **Live GPS Minimap & Navigation Compass**:
+   - Live radar in the top-right corner displays the entire city block layout, streets, your car's position & heading, and color-coded traffic dots.
+   - Overhead navigation compass points you directly to passenger destinations and tea stalls!
+
+5. **Game Modes**:
+   - 🗺️ **Free Roam (শহর ঘোরা)**: Explore every corner of Dhaka at your own pace, practice handbrake drifts around corners, and honk at traffic.
+   - 🚖 **Dhaka Taxi & Chai Delivery Missions**: Pick up passengers and deliver hot tea against the clock for cash rewards, nitro refills, and Bengali tips!
 
 ---
 
@@ -39,28 +39,18 @@ An authentic, adrenaline-fueled retro pseudo-3D highway racing game set on the c
 
 | Action | Keyboard | Touch / On-Screen Button |
 |---|---|---|
-| **Accelerate (Gas)** | `▲` or `W` | `⚡ GAS` |
-| **Brake / Reverse** | `▼` or `S` | `🛑 BRAKE` |
-| **Steer Left / Right** | `◀` `▶` or `A` `D` | `◀` `▶` |
-| **Dhaka Horn (Clear Traffic!)** | `SPACE` or `H` | `📢 HONK` |
+| **Drive Forward** | `▲` or `W` | `⚡ GAS` |
+| **Reverse / Brake** | `▼` or `S` | `🛑 REVERSE` |
+| **Steer & Turn onto Blocks** | `◀` `▶` or `A` `D` | `◀` `▶` |
+| **Handbrake Drift** | `SPACE` | `💨 DRIFT` |
+| **Dhaka Horn (Clear Traffic!)** | `H` | `📢 HONK` |
 | **CNG Nitro Boost** | `SHIFT` or `N` | `🔥 NITRO` |
 
 ---
 
 ## 🚀 How to Play Locally
 
-1. **Option 1: Direct in Browser**
-   - Simply double-click `index.html` in your file explorer to open it in Chrome, Edge, Firefox, or any modern web browser!
+1. **Double-click `play.bat`** in this folder to immediately launch the game in your default browser!
+2. Or open `index.html` directly in Chrome, Edge, or Firefox.
 
-2. **Option 2: Local HTTP Server (Recommended)**
-   - Open PowerShell or Terminal in this folder:
-     ```powershell
-     cd C:\Users\SN-LP-195\.gemini\antigravity\scratch\dhaka-racer
-     python -m http.server 8080
-     ```
-   - Then open [http://localhost:8080](http://localhost:8080) in your browser.
-
----
-
-*Enjoy the rush and drive safe on Dhaka roads! জয় বাংলা!*
-
+Enjoy drifting around Dhaka's city blocks! জয় বাংলা!
