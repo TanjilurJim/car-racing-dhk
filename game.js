@@ -121,6 +121,31 @@
       this.remotePlayers = new Map();
       this.lanSendTimer = 0;
 
+      // Game Mode: 'OPEN_WORLD' or 'RACE_COMBAT'
+      this.gameMode = 'OPEN_WORLD';
+
+      // Combat Weapons State
+      this.ammoRockets = 3;
+      this.ammoMines = 2;
+      this.rocketCooldown = 0;
+      this.mineCooldown = 0;
+      this.rocketReloadTimer = 0;
+      this.mineReloadTimer = 0;
+      this.activeRockets = [];
+      this.activeMines = [];
+
+      // 1v1 Race Circuit State
+      this.raceCountdown = -1;
+      this.raceCountdownTimer = 0;
+      this.raceActive = false;
+      this.currentCheckpoint = 0;
+      this.currentLap = 1;
+      this.totalLaps = 2;
+      this.raceStartTime = 0;
+      this.raceFinished = false;
+      this.myGridIndex = 0;
+      this.aiRival = null;
+
       // Camera Follow
       this.camPos = new THREE.Vector3(this.x, 6, this.z - 14);
       this.camTarget = new THREE.Vector3(this.x, 1.5, this.z);
@@ -247,6 +272,108 @@
         window.soundEngine.toggle(e.target.checked);
       };
 
+      // Driver Name Input Field
+      const nameInput = document.getElementById('player-name-input');
+      if (nameInput) {
+        nameInput.addEventListener('input', (e) => {
+          this.myName = e.target.value.trim().substring(0, 20) || 'Dhakaiya Racer';
+          if (this.lanWs && this.lanWs.readyState === 1) {
+            this.lanWs.send(JSON.stringify({
+              type: 'SET_PROFILE',
+              name: this.myName,
+              carType: CARS[this.selectedCarIndex].id,
+              gameMode: this.gameMode
+            }));
+          }
+        });
+      }
+
+      // Game Mode Selection Cards: Open World vs Race & Combat
+      const modeOpen = document.getElementById('mode-open-world');
+      const modeRace = document.getElementById('mode-race-combat');
+      if (modeOpen && modeRace) {
+        modeOpen.onclick = () => {
+          this.gameMode = 'OPEN_WORLD';
+          modeOpen.classList.add('active');
+          modeRace.classList.remove('active');
+          const tag1 = modeOpen.querySelector('.mode-tag');
+          const tag2 = modeRace.querySelector('.mode-tag');
+          if (tag1) tag1.textContent = 'SELECTED';
+          if (tag2) tag2.textContent = 'SELECT';
+          if (this.lanWs && this.lanWs.readyState === 1) {
+            this.lanWs.send(JSON.stringify({
+              type: 'SET_PROFILE',
+              name: this.myName,
+              carType: CARS[this.selectedCarIndex].id,
+              gameMode: this.gameMode
+            }));
+          }
+        };
+        modeRace.onclick = () => {
+          this.gameMode = 'RACE_COMBAT';
+          modeRace.classList.add('active');
+          modeOpen.classList.remove('active');
+          const tag1 = modeOpen.querySelector('.mode-tag');
+          const tag2 = modeRace.querySelector('.mode-tag');
+          if (tag1) tag1.textContent = 'SELECT';
+          if (tag2) tag2.textContent = 'SELECTED';
+          if (this.lanWs && this.lanWs.readyState === 1) {
+            this.lanWs.send(JSON.stringify({
+              type: 'SET_PROFILE',
+              name: this.myName,
+              carType: CARS[this.selectedCarIndex].id,
+              gameMode: this.gameMode
+            }));
+          }
+        };
+      }
+
+      // Weapon action buttons
+      const fireRocketBtn = document.getElementById('btn-fire-rocket');
+      if (fireRocketBtn) fireRocketBtn.onclick = () => this.fireRocket();
+
+      const dropMineBtn = document.getElementById('btn-drop-mine');
+      if (dropMineBtn) dropMineBtn.onclick = () => this.dropMine();
+
+      const touchFireBtn = document.getElementById('btn-touch-fire');
+      if (touchFireBtn) {
+        touchFireBtn.onclick = (e) => { e.preventDefault(); this.fireRocket(); };
+        touchFireBtn.ontouchstart = (e) => { e.preventDefault(); this.fireRocket(); };
+      }
+
+      const touchMineBtn = document.getElementById('btn-touch-mine');
+      if (touchMineBtn) {
+        touchMineBtn.onclick = (e) => { e.preventDefault(); this.dropMine(); };
+        touchMineBtn.ontouchstart = (e) => { e.preventDefault(); this.dropMine(); };
+      }
+
+      // Winner Modal Rematch & Freeroam buttons
+      const rematchBtn = document.getElementById('btn-race-rematch');
+      if (rematchBtn) {
+        rematchBtn.onclick = () => {
+          const modal = document.getElementById('winner-modal');
+          if (modal) modal.classList.add('hidden');
+          if (this.lanWs && this.lanWs.readyState === 1) {
+            this.lanWs.send(JSON.stringify({ type: 'TRIGGER_RACE' }));
+          } else {
+            this.startSoloRace();
+          }
+        };
+      }
+
+      const freeroamBtn = document.getElementById('btn-race-freeroam');
+      if (freeroamBtn) {
+        freeroamBtn.onclick = () => {
+          const modal = document.getElementById('winner-modal');
+          if (modal) modal.classList.add('hidden');
+          this.gameMode = 'OPEN_WORLD';
+          const raceCard = document.getElementById('race-card');
+          if (raceCard) raceCard.classList.add('hidden');
+          this.raceActive = false;
+          this.showQuip('মুক্ত শহর মোডে ফিরে এসেছেন! ইচ্ছামতো ঢাকা শহর ড্রাইভ করুন! 🏙️');
+        };
+      }
+
       this.updateCarPreview();
     }
 
@@ -272,6 +399,12 @@
         if (e.code === 'KeyC') {
           this.cameraMode = this.cameraMode === 'CHASE' ? 'HOOD' : 'CHASE';
           this.showQuip(`Camera switched to ${this.cameraMode} View! 🎥`);
+        }
+        if (e.code === 'KeyF' || e.code === 'KeyX') {
+          if (this.gameState === 'PLAYING') this.fireRocket();
+        }
+        if (e.code === 'KeyB' || e.code === 'KeyM') {
+          if (this.gameState === 'PLAYING') this.dropMine();
         }
         if (e.code === 'Escape') {
           if (this.gameState === 'PLAYING') {
@@ -427,6 +560,11 @@
       window.soundEngine.resume();
       window.soundEngine.startMusic();
 
+      const nameInput = document.getElementById('player-name-input');
+      if (nameInput && nameInput.value.trim()) {
+        this.myName = nameInput.value.trim().substring(0, 20);
+      }
+
       if (this.playerMesh) {
         this.scene.remove(this.playerMesh);
       }
@@ -453,6 +591,13 @@
       this.honkCount = 0;
       this.jobsCompleted = 0;
 
+      // Reset weapons
+      this.ammoRockets = 3;
+      this.ammoMines = 2;
+      this.rocketCooldown = 0;
+      this.mineCooldown = 0;
+      this.updateWeaponHUD();
+
       this.gameState = 'PLAYING';
       this.isPaused = false;
       const pauseModal = document.getElementById('pause-modal');
@@ -461,7 +606,41 @@
       this.startScreen.classList.add('hidden');
       this.hud.classList.remove('hidden');
 
-      this.showQuip('৩ডি ঢাকা কানেক্টেড রোডে স্বাগতম! ফুল স্পীডে ছুটুন! 🏎️');
+      const raceCard = document.getElementById('race-card');
+      const jobBtn = document.getElementById('btn-job');
+
+      // Send Profile & Selected Mode to Server over LAN
+      if (this.lanWs && this.lanWs.readyState === 1) {
+        this.lanWs.send(JSON.stringify({
+          type: 'SET_PROFILE',
+          name: this.myName,
+          carType: car.modelType,
+          gameMode: this.gameMode
+        }));
+      }
+
+      if (this.gameMode === 'RACE_COMBAT') {
+        if (raceCard) raceCard.classList.remove('hidden');
+        if (jobBtn) jobBtn.style.display = 'none';
+
+        // Check if there are remote players already online
+        if (this.remotePlayers.size >= 1 && this.lanWs && this.lanWs.readyState === 1) {
+          this.lanWs.send(JSON.stringify({ type: 'TRIGGER_RACE' }));
+          this.showQuip(`🏁 রেস ও শুটার ব্যাটেল শুরু হচ্ছে! প্রতিপক্ষ প্রস্তুত! ⚔️`);
+        } else {
+          // Solo mode until friend joins: spawn AI competitor to race & shoot!
+          this.startSoloRace();
+        }
+      } else {
+        if (raceCard) raceCard.classList.add('hidden');
+        if (jobBtn) jobBtn.style.display = 'block';
+        this.raceActive = false;
+        if (this.aiRival && this.aiRival.mesh) {
+          this.scene.remove(this.aiRival.mesh);
+          this.aiRival = null;
+        }
+        this.showQuip('৩ডি ঢাকা মুক্ত শহরে স্বাগতম! ফ্রি-রোম ড্রাইভ ও মিশন উপভোগ করুন! 🏙️');
+      }
     }
 
     // ==========================================
@@ -610,6 +789,36 @@
         }
       } else if (msg.type === 'PLAYER_HONKED') {
         window.soundEngine.playBusHorn();
+      } else if (msg.type === 'PLAYER_PROFILE_UPDATED') {
+        if (msg.id !== this.myId) {
+          let remote = this.remotePlayers.get(msg.id);
+          if (!remote) remote = this.spawnRemotePlayer(msg);
+          if (remote) {
+            remote.name = msg.name;
+            remote.gameMode = msg.gameMode;
+            if (remote.nameTag && remote.nameTag.updateNameTag) {
+              remote.nameTag.updateNameTag(msg.name, remote.health);
+            }
+          }
+        }
+      } else if (msg.type === 'RACE_COUNTDOWN_START') {
+        this.startRaceCountdown(msg.racers);
+      } else if (msg.type === 'ROCKET_FIRED') {
+        this.spawnRemoteRocket(msg);
+      } else if (msg.type === 'MINE_DROPPED') {
+        this.spawnRemoteMine(msg);
+      } else if (msg.type === 'ROCKET_HIT_EVENT') {
+        this.handleRocketHitEvent(msg);
+      } else if (msg.type === 'MINE_HIT_EVENT') {
+        this.handleMineHitEvent(msg);
+      } else if (msg.type === 'RACER_CHECKPOINT') {
+        const remote = this.remotePlayers.get(msg.id);
+        if (remote) {
+          remote.currentCheckpoint = msg.checkpointIndex;
+          remote.currentLap = msg.lap;
+        }
+      } else if (msg.type === 'RACE_WINNER_ANNOUNCED') {
+        this.showWinnerModal(msg.winnerName, msg.finalTime);
       } else if (msg.type === 'PLAYER_LEFT') {
         const remote = this.remotePlayers.get(msg.id);
         if (remote) {
@@ -717,6 +926,631 @@
           this.showQuip(`💥 আপনি ${remote.name}-কে প্রচণ্ড ধাক্কা দিলেন! (-${damage}% HP)`);
         }
       });
+    }
+
+    // ==========================================
+    // 3D COMBAT & WEAPONS SYSTEM (Rockets & Mines)
+    // ==========================================
+    updateWeaponHUD() {
+      const rocketAmmoEl = document.getElementById('ammo-rocket');
+      const mineAmmoEl = document.getElementById('ammo-mine');
+      if (rocketAmmoEl) rocketAmmoEl.textContent = this.ammoRockets;
+      if (mineAmmoEl) mineAmmoEl.textContent = this.ammoMines;
+    }
+
+    fireRocket() {
+      if (this.ammoRockets <= 0 || this.rocketCooldown > 0) return;
+      this.ammoRockets--;
+      this.rocketCooldown = 0.8;
+      this.updateWeaponHUD();
+
+      const fwdX = Math.sin(this.angle);
+      const fwdZ = Math.cos(this.angle);
+      const rX = this.x + fwdX * 2.8;
+      const rY = 0.75;
+      const rZ = this.z + fwdZ * 2.8;
+      const speed = 80;
+
+      const rMesh = Models3D.createRocketProjectile();
+      rMesh.position.set(rX, rY, rZ);
+      rMesh.rotation.y = this.angle;
+      this.scene.add(rMesh);
+
+      const rocketId = 'rkt_' + Math.random().toString(36).substring(2, 8);
+      this.activeRockets.push({
+        id: rocketId,
+        mesh: rMesh,
+        x: rX,
+        y: rY,
+        z: rZ,
+        vx: fwdX * speed,
+        vz: fwdZ * speed,
+        angle: this.angle,
+        life: 1.8,
+        isMine: true
+      });
+
+      window.soundEngine.playShootRocket();
+      this.showQuip('🚀 রকেট ফায়ার করলেন! (Rocket fired!)');
+
+      if (this.lanWs && this.lanWs.readyState === 1) {
+        this.lanWs.send(JSON.stringify({
+          type: 'SHOOT_ROCKET',
+          rocketId: rocketId,
+          originX: rX,
+          originY: rY,
+          originZ: rZ,
+          angle: this.angle,
+          speed: speed
+        }));
+      }
+    }
+
+    dropMine() {
+      if (this.ammoMines <= 0 || this.mineCooldown > 0) return;
+      this.ammoMines--;
+      this.mineCooldown = 1.5;
+      this.updateWeaponHUD();
+
+      const fwdX = Math.sin(this.angle);
+      const fwdZ = Math.cos(this.angle);
+      const mX = this.x - fwdX * 2.8;
+      const mZ = this.z - fwdZ * 2.8;
+
+      const mMesh = Models3D.createSpikeTrap();
+      mMesh.position.set(mX, 0.05, mZ);
+      this.scene.add(mMesh);
+
+      const mineId = 'mine_' + Math.random().toString(36).substring(2, 8);
+      this.activeMines.push({
+        id: mineId,
+        mesh: mMesh,
+        x: mX,
+        z: mZ,
+        dropperId: this.myId,
+        life: 40
+      });
+
+      window.soundEngine.playMineDrop();
+      this.showQuip('💣 রাস্তায় স্পাইক মাইন পাতলেন! (Spike mine dropped!)');
+
+      if (this.lanWs && this.lanWs.readyState === 1) {
+        this.lanWs.send(JSON.stringify({
+          type: 'DROP_MINE',
+          mineId: mineId,
+          x: mX,
+          z: mZ
+        }));
+      }
+    }
+
+    spawnRemoteRocket(data) {
+      const rMesh = Models3D.createRocketProjectile();
+      rMesh.position.set(data.originX, data.originY || 0.75, data.originZ);
+      rMesh.rotation.y = data.angle;
+      this.scene.add(rMesh);
+
+      const fwdX = Math.sin(data.angle);
+      const fwdZ = Math.cos(data.angle);
+      const speed = data.speed || 80;
+
+      this.activeRockets.push({
+        id: data.rocketId,
+        mesh: rMesh,
+        x: data.originX,
+        y: data.originY || 0.75,
+        z: data.originZ,
+        vx: fwdX * speed,
+        vz: fwdZ * speed,
+        angle: data.angle,
+        life: 1.8,
+        isMine: false,
+        shooterId: data.shooterId
+      });
+
+      window.soundEngine.playShootRocket();
+    }
+
+    spawnRemoteMine(data) {
+      const mMesh = Models3D.createSpikeTrap();
+      mMesh.position.set(data.x, 0.05, data.z);
+      this.scene.add(mMesh);
+
+      this.activeMines.push({
+        id: data.mineId,
+        mesh: mMesh,
+        x: data.x,
+        z: data.z,
+        dropperId: data.dropperId,
+        life: 40
+      });
+
+      window.soundEngine.playMineDrop();
+    }
+
+    handleRocketHitEvent(msg) {
+      window.soundEngine.playExplosion();
+      for (let i = 0; i < 28; i++) {
+        this.spawnParticle(msg.hitX || this.x, 1.2, msg.hitZ || this.z, [0xff0044, 0xffa500, 0xffffff, 0x333333]);
+      }
+
+      if (msg.targetId === this.myId) {
+        this.health = Math.max(5, this.health - msg.damage);
+        this.vx += (msg.nx || 0) * (msg.impulse || 35) * 0.45;
+        this.vz += (msg.nz || 1) * (msg.impulse || 35) * 0.45;
+        this.spinVy = 6.2;
+        this.screenShake = 1.4;
+        Models3D.updateDamageDeformation(this.playerMesh, this.health);
+        this.showQuip(`🚀 ${msg.attackerName} আপনাকে রকেট মেরে উড়াল দিলো! (-${msg.damage}% HP)`);
+      }
+    }
+
+    handleMineHitEvent(msg) {
+      const idx = this.activeMines.findIndex(m => m.id === msg.mineId);
+      if (idx !== -1) {
+        this.scene.remove(this.activeMines[idx].mesh);
+        this.activeMines.splice(idx, 1);
+      }
+
+      window.soundEngine.playMineDetonate();
+      for (let i = 0; i < 22; i++) {
+        this.spawnParticle(msg.x || this.x, 0.6, msg.z || this.z, [0xff5500, 0xffff00, 0xff0000]);
+      }
+
+      if (msg.targetId === this.myId) {
+        this.health = Math.max(5, this.health - msg.damage);
+        this.speed *= 0.25;
+        this.spinVy = 8.5;
+        this.screenShake = 1.3;
+        Models3D.updateDamageDeformation(this.playerMesh, this.health);
+        this.showQuip('💣 স্পাইক মাইনে চাকা নষ্ট! গাড়ি ৩৬০° ঘুরপাক খেলো!');
+      }
+    }
+
+    updateWeapons(dt) {
+      // Passive Ammo Recharge
+      if (this.ammoRockets < 3) {
+        this.rocketReloadTimer += dt;
+        if (this.rocketReloadTimer >= 4.5) {
+          this.ammoRockets++;
+          this.rocketReloadTimer = 0;
+          this.updateWeaponHUD();
+        }
+      }
+      if (this.ammoMines < 2) {
+        this.mineReloadTimer += dt;
+        if (this.mineReloadTimer >= 7.5) {
+          this.ammoMines++;
+          this.mineReloadTimer = 0;
+          this.updateWeaponHUD();
+        }
+      }
+      if (this.rocketCooldown > 0) this.rocketCooldown -= dt;
+      if (this.mineCooldown > 0) this.mineCooldown -= dt;
+
+      // Update Active Rockets
+      for (let i = this.activeRockets.length - 1; i >= 0; i--) {
+        const r = this.activeRockets[i];
+        r.life -= dt;
+        r.x += r.vx * dt;
+        r.z += r.vz * dt;
+        r.mesh.position.set(r.x, r.y, r.z);
+
+        // Rocket exhaust particle trail
+        if (Math.random() < 0.75) {
+          this.spawnParticle(r.x, r.y, r.z, [0x00f0ff, 0xff9900, 0xff2200]);
+        }
+
+        let exploded = false;
+
+        // Collision with remote players (if local fired)
+        if (r.isMine) {
+          this.remotePlayers.forEach(remote => {
+            if (exploded) return;
+            const dist = Math.hypot(r.x - remote.mesh.position.x, r.z - remote.mesh.position.z);
+            if (dist < 3.2) {
+              exploded = true;
+              const nx = (r.vx / 80) || 0;
+              const nz = (r.vz / 80) || 1;
+              if (this.lanWs && this.lanWs.readyState === 1) {
+                this.lanWs.send(JSON.stringify({
+                  type: 'ROCKET_HIT',
+                  targetId: remote.id,
+                  damage: 25,
+                  impulse: 38,
+                  nx: nx,
+                  nz: nz,
+                  hitX: r.x,
+                  hitZ: r.z
+                }));
+              }
+              this.showQuip(`🚀 সরাসরি আঘাত! ${remote.name}-কে রকেট দিয়ে ধ্বংস করলেন!`);
+            }
+          });
+
+          // Collision with AI rival (if in solo race)
+          if (!exploded && this.aiRival && this.aiRival.mesh) {
+            const dist = Math.hypot(r.x - this.aiRival.x, r.z - this.aiRival.z);
+            if (dist < 3.2) {
+              exploded = true;
+              this.aiRival.health = Math.max(5, this.aiRival.health - 25);
+              this.aiRival.spinVy = 7.0;
+              this.aiRival.speed *= 0.3;
+              Models3D.updateDamageDeformation(this.aiRival.mesh, this.aiRival.health);
+              window.soundEngine.playExplosion();
+              for (let p = 0; p < 25; p++) {
+                this.spawnParticle(r.x, 1.2, r.z, [0xff4500, 0xffd700, 0xffffff]);
+              }
+              this.showQuip(`🚀 দারুণ শট! AI প্রতিদ্বন্দ্বীকে রকেট দিয়ে উড়িয়ে দিলেন!`);
+            }
+          }
+        }
+
+        // Collision with traffic vehicles
+        if (!exploded) {
+          for (const t of this.traffic) {
+            const dist = Math.hypot(r.x - t.x, r.z - t.z);
+            if (dist < t.radius + 1.2) {
+              exploded = true;
+              t.speed = 0;
+              t.spinVy = 9.0;
+              window.soundEngine.playExplosion();
+              for (let p = 0; p < 22; p++) {
+                this.spawnParticle(r.x, 1.2, r.z, [0xff9900, 0xff0055, 0x333333]);
+              }
+              break;
+            }
+          }
+        }
+
+        // Collision with city buildings
+        if (!exploded && City3D.checkCollision(r.x, r.z, 0.8).collided) {
+          exploded = true;
+          window.soundEngine.playExplosion();
+          for (let p = 0; p < 18; p++) {
+            this.spawnParticle(r.x, 1.2, r.z, [0xff5500, 0x888888]);
+          }
+        }
+
+        if (exploded || r.life <= 0) {
+          this.scene.remove(r.mesh);
+          this.activeRockets.splice(i, 1);
+        }
+      }
+
+      // Update Active Mines
+      for (let i = this.activeMines.length - 1; i >= 0; i--) {
+        const m = this.activeMines[i];
+        m.life -= dt;
+
+        // Pulsate red beacon
+        if (m.mesh.beaconMesh) {
+          const s = 1 + Math.sin(performance.now() * 0.012) * 0.3;
+          m.mesh.beaconMesh.scale.set(s, s, s);
+        }
+
+        let triggered = false;
+
+        // Check if local player hit opponent mine
+        if (m.dropperId !== this.myId) {
+          const dist = Math.hypot(this.x - m.x, this.z - m.z);
+          if (dist < 2.3) {
+            triggered = true;
+            if (this.lanWs && this.lanWs.readyState === 1) {
+              this.lanWs.send(JSON.stringify({
+                type: 'MINE_HIT',
+                mineId: m.id,
+                targetId: this.myId,
+                damage: 20,
+                x: m.x,
+                z: m.z
+              }));
+            }
+          }
+        }
+
+        // Check if AI rival hit mine
+        if (!triggered && this.aiRival && this.aiRival.mesh) {
+          const dist = Math.hypot(this.aiRival.x - m.x, this.aiRival.z - m.z);
+          if (dist < 2.3) {
+            triggered = true;
+            this.aiRival.health = Math.max(5, this.aiRival.health - 20);
+            this.aiRival.spinVy = 8.5;
+            this.aiRival.speed *= 0.2;
+            Models3D.updateDamageDeformation(this.aiRival.mesh, this.aiRival.health);
+            window.soundEngine.playMineDetonate();
+            for (let p = 0; p < 22; p++) {
+              this.spawnParticle(m.x, 0.6, m.z, [0xff4500, 0xffd700, 0xffffff]);
+            }
+            this.showQuip('💣 AI প্রতিদ্বন্দ্বী মাইনে পা দিয়ে স্পিন খেলো!');
+          }
+        }
+
+        if (triggered || m.life <= 0) {
+          this.scene.remove(m.mesh);
+          this.activeMines.splice(i, 1);
+        }
+      }
+    }
+
+    // ==========================================
+    // 1v1 RACE CIRCUIT & SYNCHRONIZED COUNTDOWN
+    // ==========================================
+    startRaceCountdown(racersList = []) {
+      const overlay = document.getElementById('countdown-overlay');
+      const numEl = document.getElementById('countdown-number');
+      const banglaEl = document.getElementById('countdown-bangla');
+      if (overlay) overlay.classList.remove('hidden');
+
+      // Grid position assignment
+      const grid0 = { x: -120, z: 22, angle: 0 };
+      const grid1 = { x: -125, z: 16, angle: 0 };
+
+      let myGrid = grid0;
+      if (Array.isArray(racersList)) {
+        const found = racersList.find(r => r.id === this.myId);
+        if (found && found.gridPos) {
+          myGrid = found.gridPos;
+          this.myGridIndex = found.gridIndex;
+        }
+      }
+
+      // Teleport local car to grid
+      this.x = myGrid.x;
+      this.z = myGrid.z;
+      this.angle = myGrid.angle || 0;
+      this.speed = 0;
+      this.vx = 0;
+      this.vz = 0;
+      this.health = 100;
+      Models3D.updateDamageDeformation(this.playerMesh, 100);
+
+      this.currentCheckpoint = 1;
+      this.currentLap = 1;
+      this.raceFinished = false;
+      this.raceActive = true;
+      this.raceCountdown = 3;
+      this.raceCountdownTimer = 1.0;
+
+      if (numEl) numEl.textContent = '3';
+      if (banglaEl) banglaEl.textContent = '৩... ২... ১... ভাগো!';
+      window.soundEngine.playRaceCountdown(3);
+
+      const raceCard = document.getElementById('race-card');
+      if (raceCard) raceCard.classList.remove('hidden');
+    }
+
+    startSoloRace() {
+      // Spawn AI Rival side-by-side
+      if (!this.aiRival) {
+        const aiMesh = Models3D.createCarModel('premio');
+        this.scene.add(aiMesh);
+        const nameTag = Models3D.createPlayerNameTag('SULTANA AI 🤖', '#f43f5e');
+        aiMesh.add(nameTag);
+
+        this.aiRival = {
+          name: 'SULTANA AI 🤖',
+          mesh: aiMesh,
+          nameTag: nameTag,
+          x: -125,
+          z: 16,
+          angle: 0,
+          speed: 0,
+          spinVy: 0,
+          health: 100,
+          currentCheckpoint: 1,
+          currentLap: 1
+        };
+      } else {
+        this.aiRival.x = -125;
+        this.aiRival.z = 16;
+        this.aiRival.angle = 0;
+        this.aiRival.speed = 0;
+        this.aiRival.health = 100;
+        this.aiRival.currentCheckpoint = 1;
+        this.aiRival.currentLap = 1;
+        Models3D.updateDamageDeformation(this.aiRival.mesh, 100);
+      }
+
+      this.startRaceCountdown([
+        { id: this.myId, gridIndex: 0, gridPos: { x: -120, z: 22, angle: 0 } },
+        { id: 'ai_rival', gridIndex: 1, gridPos: { x: -125, z: 16, angle: 0 } }
+      ]);
+    }
+
+    updateRace(dt) {
+      // Handle Countdown sequence
+      if (this.raceCountdown >= 0) {
+        this.raceCountdownTimer -= dt;
+        const numEl = document.getElementById('countdown-number');
+        const banglaEl = document.getElementById('countdown-bangla');
+        const overlay = document.getElementById('countdown-overlay');
+
+        if (this.raceCountdownTimer <= 0) {
+          this.raceCountdown--;
+          this.raceCountdownTimer = 1.0;
+
+          if (this.raceCountdown === 2) {
+            if (numEl) numEl.textContent = '2';
+            window.soundEngine.playRaceCountdown(2);
+          } else if (this.raceCountdown === 1) {
+            if (numEl) numEl.textContent = '1';
+            window.soundEngine.playRaceCountdown(1);
+          } else if (this.raceCountdown === 0) {
+            if (numEl) numEl.textContent = 'GO!';
+            if (banglaEl) banglaEl.textContent = 'ভাগো! পূর্ণ গতিতে ছোটেন!';
+            window.soundEngine.playRaceCountdown(0);
+            this.raceStartTime = performance.now();
+          } else if (this.raceCountdown < 0) {
+            if (overlay) overlay.classList.add('hidden');
+          }
+        }
+      }
+
+      if (!this.raceActive || this.raceFinished) return;
+
+      // Checkpoint detection
+      const targetCp = City3D.checkpoints[this.currentCheckpoint];
+      if (targetCp) {
+        const distToCp = Math.hypot(this.x - targetCp.x, this.z - targetCp.z);
+
+        if (distToCp < 22) {
+          // Passed Checkpoint!
+          window.soundEngine.playCheckpointChime();
+          for (let p = 0; p < 20; p++) {
+            this.spawnParticle(targetCp.x, 5.0, targetCp.z, [0x00f0ff, 0xffd700, 0xffffff]);
+          }
+
+          this.score += 500;
+          this.currentCheckpoint = (this.currentCheckpoint + 1) % City3D.checkpoints.length;
+
+          if (this.lanWs && this.lanWs.readyState === 1) {
+            this.lanWs.send(JSON.stringify({
+              type: 'CHECKPOINT_PASS',
+              checkpointIndex: this.currentCheckpoint,
+              lap: this.currentLap
+            }));
+          }
+
+          // Completed a full lap!
+          if (this.currentCheckpoint === 1) {
+            this.currentLap++;
+            if (this.currentLap > this.totalLaps) {
+              // Race Finished - VICTORY!
+              this.raceFinished = true;
+              const elapsedSec = Math.round((performance.now() - this.raceStartTime) / 1000);
+              const m = Math.floor(elapsedSec / 60);
+              const s = elapsedSec % 60;
+              const timeStr = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+
+              if (this.lanWs && this.lanWs.readyState === 1) {
+                this.lanWs.send(JSON.stringify({
+                  type: 'RACE_FINISHED',
+                  finalTime: timeStr
+                }));
+              }
+              this.showWinnerModal(this.myName, timeStr);
+            } else {
+              this.showQuip(`🏁 ল্যাপ ${this.currentLap - 1} সম্পন্ন! ফাইনাল ল্যাপে স্পীড বাড়ান!`);
+            }
+          } else {
+            this.showQuip(`⚡ চেকপয়েন্ট পাস করলেন! (+500 PTS)`);
+          }
+        }
+      }
+
+      // Update Navigation Compass Arrow to next checkpoint
+      if (targetCp) {
+        const dx = targetCp.x - this.x;
+        const dz = targetCp.z - this.z;
+        const targetAngle = Math.atan2(dx, dz);
+        let diff = targetAngle - this.angle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+
+        if (this.navCompass) this.navCompass.classList.remove('hidden');
+        if (this.compassArrow) this.compassArrow.style.transform = `rotate(${diff}rad)`;
+        if (this.compassDist) {
+          const d = Math.round(Math.hypot(dx, dz));
+          this.compassDist.textContent = `${d}m`;
+        }
+      }
+
+      // Calculate Real-time Race Standing (1st vs 2nd)
+      let isFirst = true;
+      const myProgress = this.currentLap * 1000 + this.currentCheckpoint * 100 - (targetCp ? Math.hypot(this.x - targetCp.x, this.z - targetCp.z) : 0);
+
+      this.remotePlayers.forEach(r => {
+        const rLap = r.currentLap || 1;
+        const rCp = r.currentCheckpoint || 1;
+        const rTarget = City3D.checkpoints[rCp] || targetCp;
+        const rDist = rTarget ? Math.hypot(r.mesh.position.x - rTarget.x, r.mesh.position.z - rTarget.z) : 50;
+        const rProg = rLap * 1000 + rCp * 100 - rDist;
+        if (rProg > myProgress) isFirst = false;
+      });
+
+      if (this.aiRival) {
+        const aiTarget = City3D.checkpoints[this.aiRival.currentCheckpoint] || targetCp;
+        const aiDist = aiTarget ? Math.hypot(this.aiRival.x - aiTarget.x, this.aiRival.z - aiTarget.z) : 50;
+        const aiProg = this.aiRival.currentLap * 1000 + this.aiRival.currentCheckpoint * 100 - aiDist;
+        if (aiProg > myProgress) isFirst = false;
+      }
+
+      const lapEl = document.getElementById('race-lap-val');
+      const cpEl = document.getElementById('race-cp-val');
+      const posEl = document.getElementById('race-pos-val');
+
+      if (lapEl) lapEl.textContent = `${Math.min(this.currentLap, this.totalLaps)}/${this.totalLaps}`;
+      if (cpEl) cpEl.textContent = `${this.currentCheckpoint}/6`;
+      if (posEl) {
+        posEl.textContent = isFirst ? '1st 🥇' : '2nd 🥈';
+        posEl.className = isFirst ? 'pos-badge pos-1st' : 'pos-badge pos-2nd';
+      }
+    }
+
+    updateAiRival(dt) {
+      if (!this.aiRival || !this.aiRival.mesh) return;
+      const ai = this.aiRival;
+
+      // Spin decay
+      if (Math.abs(ai.spinVy) > 0.05) {
+        ai.angle += ai.spinVy * dt;
+        ai.spinVy *= 0.92;
+      }
+
+      if (this.raceCountdown > 0) return;
+
+      const cp = City3D.checkpoints[ai.currentCheckpoint];
+      if (cp) {
+        const dx = cp.x - ai.x;
+        const dz = cp.z - ai.z;
+        const dist = Math.hypot(dx, dz);
+        const desiredAngle = Math.atan2(dx, dz);
+
+        let angleDiff = desiredAngle - ai.angle;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        ai.angle += Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), 2.2 * dt);
+
+        const targetSpeed = 36.0;
+        ai.speed += (targetSpeed - ai.speed) * 0.8 * dt;
+
+        ai.x += Math.sin(ai.angle) * ai.speed * dt;
+        ai.z += Math.cos(ai.angle) * ai.speed * dt;
+
+        if (dist < 22) {
+          ai.currentCheckpoint = (ai.currentCheckpoint + 1) % City3D.checkpoints.length;
+          if (ai.currentCheckpoint === 1) ai.currentLap++;
+        }
+      }
+
+      ai.mesh.position.set(ai.x, 0, ai.z);
+      ai.mesh.rotation.y = ai.angle;
+
+      if (ai.nameTag && ai.nameTag.updateNameTag) {
+        ai.nameTag.updateNameTag(ai.name, ai.health);
+      }
+    }
+
+    showWinnerModal(winnerName, timeStr = '01:30') {
+      this.raceFinished = true;
+      window.soundEngine.playVictoryFanfare();
+
+      const modal = document.getElementById('winner-modal');
+      const nameEl = document.getElementById('winner-name');
+      const timeEl = document.getElementById('winner-time-val');
+      const titleEl = document.getElementById('winner-title');
+
+      const isMe = (winnerName === this.myName);
+      if (titleEl) titleEl.textContent = isMe ? '🏆 VICTORY! আপনি বিজয়ী! 🏆' : '🏁 RACE FINISHED! রেস সমাপ্ত 🏁';
+      if (nameEl) nameEl.textContent = `${winnerName} WINS!`;
+      if (timeEl) timeEl.textContent = timeStr;
+      if (modal) modal.classList.remove('hidden');
+
+      for (let i = 0; i < 40; i++) {
+        this.spawnParticle(this.x, 3, this.z, [0xffd700, 0x00f0ff, 0xff0055, 0xffffff]);
+      }
     }
 
     // ==========================================
@@ -1266,8 +2100,12 @@
 
       const effectiveMaxSpeed = maxSpeed * (this.nitroActive ? car.nitroPower : 1.0);
 
-      // Gas / Reverse
-      if (this.keys.forward) {
+      // Gas / Reverse (Input locked during 3-2-1 race countdown)
+      if (this.raceCountdown > 0) {
+        this.speed = 0;
+        this.vx = 0;
+        this.vz = 0;
+      } else if (this.keys.forward) {
         this.speed = Math.min(effectiveMaxSpeed, this.speed + accel * dt * (this.nitroActive ? 1.8 : 1.0));
       } else if (this.keys.backward) {
         this.speed = Math.max(-maxSpeed * 0.45, this.speed - accel * 1.6 * dt);
@@ -1412,6 +2250,15 @@
 
       this.updateRemotePlayers(dt);
       this.updatePvPCollisions();
+
+      // Weapons simulation (Rockets & Road Mines)
+      this.updateWeapons(dt);
+
+      // Race Mode & Head-to-Head circuit logic
+      if (this.gameMode === 'RACE_COMBAT') {
+        this.updateRace(dt);
+        this.updateAiRival(dt);
+      }
 
       if (Math.random() < 0.002 && !this.quipBanner.classList.contains('show')) {
         const randQuip = QUIPS[Math.floor(Math.random() * QUIPS.length)];
@@ -1591,6 +2438,23 @@
         m.arc((remote.mesh.position.x + halfW) * scale, (remote.mesh.position.z + halfW) * scale, 3.8, 0, Math.PI * 2);
         m.fill();
       });
+
+      // AI Rival on Minimap (Red Circle)
+      if (this.aiRival) {
+        m.fillStyle = '#f43f5e';
+        m.beginPath();
+        m.arc((this.aiRival.x + halfW) * scale, (this.aiRival.z + halfW) * scale, 3.8, 0, Math.PI * 2);
+        m.fill();
+      }
+
+      // Checkpoints Circuit on Minimap
+      if (this.gameMode === 'RACE_COMBAT' && City3D.checkpoints) {
+        City3D.checkpoints.forEach((cp, idx) => {
+          const isTarget = idx === this.currentCheckpoint;
+          m.fillStyle = isTarget ? '#ffea00' : '#00f0ff';
+          m.fillRect((cp.x + halfW) * scale - (isTarget ? 3 : 2), (cp.z + halfW) * scale - (isTarget ? 3 : 2), isTarget ? 6 : 4, isTarget ? 6 : 4);
+        });
+      }
 
       // Mission destination
       if (this.currentMission) {

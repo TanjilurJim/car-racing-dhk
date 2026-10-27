@@ -42,6 +42,16 @@ const City3D = {
 
   roundabout: { name: 'SHAPLA CHOTTOR', bangla: 'শাপলা চত্বর', x: -120, z: 120, radius: 28 },
 
+  checkpoints: [
+    { index: 0, title: 'START / FINISH', name: 'KAZI NAZRUL ISLAM AVE', x: -120, z: 20, rotationY: 0, width: 38, isFinish: true },
+    { index: 1, title: 'CHECKPOINT 1', name: 'PANTHAPATH CROSSING', x: -120, z: -120, rotationY: 0, width: 38, isFinish: false },
+    { index: 2, title: 'CHECKPOINT 2', name: 'PANTHAPATH EASTWAY', x: 0, z: -120, rotationY: Math.PI / 2, width: 32, isFinish: false },
+    { index: 3, title: 'CHECKPOINT 3', name: 'SATMASJID ROAD', x: 120, z: 0, rotationY: 0, width: 32, isFinish: false },
+    { index: 4, title: 'CHECKPOINT 4', name: 'HATIRJHEEL LAKE DRIVE', x: 0, z: 120, rotationY: Math.PI / 2, width: 32, isFinish: false },
+    { index: 5, title: 'CHECKPOINT 5', name: 'SHAPLA CHOTTOR ROUNDABOUT', x: -120, z: 120, rotationY: 0, width: 38, isFinish: false }
+  ],
+  checkpointGates: [],
+
   collisionBoxes: [],
   pickups: [],
   destinations: [],
@@ -64,6 +74,7 @@ const City3D = {
     this.buildStreetlights(scene);
     this.buildPedestrians(scene);
     this.buildPickups(scene);
+    this.buildCheckpoints(scene);
     this.buildDestinations();
   },
 
@@ -626,6 +637,17 @@ const City3D = {
         type: loc.type,
         collected: false
       });
+    });
+  },
+
+  buildCheckpoints(scene) {
+    this.checkpointGates = [];
+    this.checkpoints.forEach((cp) => {
+      const gate = Models3D.createCheckpointGate(cp.title, cp.isFinish, cp.width);
+      gate.position.set(cp.x, 0, cp.z);
+      gate.rotation.y = cp.rotationY;
+      scene.add(gate);
+      this.checkpointGates.push(gate);
     });
   },
 

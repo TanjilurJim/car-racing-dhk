@@ -458,6 +458,220 @@ class SoundEngine {
     playStep();
   }
 
+  // --- Combat & Race Sound Effects ---
+
+  // Rocket Firing Whoosh
+  playShootRocket() {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    // Pitch-falling sawtooth + whoosh noise
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.35);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1200, now);
+    filter.frequency.exponentialRampToValueAtTime(400, now + 0.35);
+
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.42);
+
+    // Noise component for rocket propellant hiss
+    const bufSize = Math.floor(this.ctx.sampleRate * 0.3);
+    const noiseBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+
+    const noiseSrc = this.ctx.createBufferSource();
+    noiseSrc.buffer = noiseBuf;
+    const nGain = this.ctx.createGain();
+    nGain.gain.setValueAtTime(0.22, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    noiseSrc.connect(nGain);
+    nGain.connect(this.ctx.destination);
+    noiseSrc.start(now);
+  }
+
+  // Rocket / Heavy Explosion Blast
+  playExplosion() {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+
+    // Sub-bass thump
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(160, now);
+    subOsc.frequency.exponentialRampToValueAtTime(25, now + 0.65);
+
+    subGain.gain.setValueAtTime(0.55, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + 0.72);
+
+    // Filtered noise blast & crackle
+    const bufSize = Math.floor(this.ctx.sampleRate * 0.7);
+    const noiseBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 1.4);
+    }
+
+    const noiseSrc = this.ctx.createBufferSource();
+    noiseSrc.buffer = noiseBuf;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(220, now + 0.6);
+
+    const nGain = this.ctx.createGain();
+    nGain.gain.setValueAtTime(0.5, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.68);
+
+    noiseSrc.connect(filter);
+    filter.connect(nGain);
+    nGain.connect(this.ctx.destination);
+
+    noiseSrc.start(now);
+  }
+
+  // Drop Spike Mine (Mechanical metallic arming click)
+  playMineDrop() {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  // Road Mine Detonation (Tire puncture screech + blast)
+  playMineDetonate() {
+    this.playTireScreech();
+    this.playExplosion();
+  }
+
+  // Race Countdown Beeps (step: 3, 2, 1, or 0 for GO)
+  playRaceCountdown(step) {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    if (step > 0) {
+      // 3, 2, 1 -> 440 Hz crisp beep
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else {
+      // 0 = GO! -> 880 Hz triumphant double beep
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, now);
+      gain.gain.setValueAtTime(0.45, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(1174.66, now); // D6
+      gain2.gain.setValueAtTime(0.25, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc2.connect(gain2);
+      gain2.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.72);
+      osc2.start(now);
+      osc2.stop(now + 0.72);
+    }
+  }
+
+  // Checkpoint Passed Chime (Crystal C5 -> G5 chime)
+  playCheckpointChime() {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    const notes = [523.25, 783.99]; // C5, G5
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+      gain.gain.setValueAtTime(0.28, now + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + idx * 0.08);
+      osc.stop(now + idx * 0.08 + 0.38);
+    });
+  }
+
+  // Victory Fanfare (Celebratory synth arpeggio)
+  playVictoryFanfare() {
+    if (!this.ctx || !this.enabled) return;
+    this.resume();
+
+    const now = this.ctx.currentTime;
+    const chords = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    chords.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.12);
+      gain.gain.setValueAtTime(0.35, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.8);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.85);
+    });
+  }
+
   stopMusic() {
     this.musicPlaying = false;
     if (this.musicTimer) {

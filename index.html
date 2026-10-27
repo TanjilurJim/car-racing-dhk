@@ -34,6 +34,32 @@
           <span id="time-val" class="hud-value neon-gold">--:--</span>
         </div>
 
+        <!-- 1v1 Race HUD Card (Active in Race & Combat mode) -->
+        <div class="hud-card race-box hidden" id="race-card">
+          <div class="race-header">
+            <span class="hud-label">1v1 CIRCUIT RACE</span>
+            <span id="race-pos-val" class="pos-badge pos-1st">1st 🥇</span>
+          </div>
+          <div class="race-stats-row">
+            <span>LAP: <strong id="race-lap-val" class="neon-cyan">1/2</strong></span>
+            <span>GATE: <strong id="race-cp-val" class="neon-gold">1/6</strong></span>
+          </div>
+        </div>
+
+        <!-- Combat Weapons Bar -->
+        <div class="hud-card weapon-box" id="weapon-card">
+          <button id="btn-fire-rocket" class="weapon-action-btn rocket-btn" title="Fire Forward Rocket [F]">
+            <span class="weapon-icon">🚀</span>
+            <span class="weapon-text">ROCKET [F]</span>
+            <span id="ammo-rocket" class="ammo-count">3</span>
+          </button>
+          <button id="btn-drop-mine" class="weapon-action-btn mine-btn" title="Drop Road Spike Mine [B]">
+            <span class="weapon-icon">💣</span>
+            <span class="weapon-text">MINE [B]</span>
+            <span id="ammo-mine" class="ammo-count">2</span>
+          </button>
+        </div>
+
         <!-- Pause Button (ESC Key or Touch Tap) -->
         <button id="btn-pause" class="hud-card pause-btn" title="Pause Game [ESC]">
           <span class="pause-icon">⏸️</span>
@@ -107,6 +133,8 @@
           <button id="btn-horn" class="touch-btn horn-btn">📢 HONK</button>
           <button id="btn-drift" class="touch-btn drift-btn">💨 DRIFT</button>
           <button id="btn-cam" class="touch-btn cam-btn">🎥 CAM</button>
+          <button id="btn-touch-fire" class="touch-btn fire-btn">🚀 FIRE</button>
+          <button id="btn-touch-mine" class="touch-btn mine-btn">💣 MINE</button>
         </div>
         <div class="touch-right-cluster">
           <button id="btn-brake" class="touch-btn brake-btn">🛑 REV</button>
@@ -128,6 +156,38 @@
           drift through 4-way intersections and Shapla Chottor, dodge Dhaka buses, Laguna, Pathao bikes, CNGs, and cycle rickshaws!
           <br><strong>Pick up repair kits 🛠️ and coins 🪙 to stay brand new! No game over death!</strong>
         </p>
+
+        <!-- Driver Profile Setup -->
+        <div class="driver-profile-card">
+          <label for="player-name-input" class="driver-label">👤 YOUR DRIVER NAME (আপনার নাম):</label>
+          <div class="driver-input-row">
+            <input type="text" id="player-name-input" class="driver-input" maxlength="20" placeholder="e.g. Mirpur Speedster / Tanjilur" value="Dhakaiya Racer">
+            <span class="driver-badge">READY</span>
+          </div>
+        </div>
+
+        <!-- 2 Distinct Game Modes: Open World vs Race & Combat -->
+        <div class="mode-select-section">
+          <div class="mode-select-header">SELECT GAME MODE (খেলার ধরন বেছে নিন)</div>
+          <div class="mode-cards-grid">
+            <div class="mode-card active" id="mode-open-world" data-mode="OPEN_WORLD">
+              <div class="mode-icon">🏙️</div>
+              <div class="mode-title">OPEN WORLD</div>
+              <div class="mode-subtitle">মুক্ত শহর ভ্রমণ</div>
+              <p class="mode-desc">Free roam Dhaka's roads, explore Hatirjheel, Metro Rail & take taxi fares. Relaxed & indestructible.</p>
+              <div class="mode-tag active-tag">SELECTED</div>
+            </div>
+
+            <div class="mode-card" id="mode-race-combat" data-mode="RACE_COMBAT">
+              <div class="mode-hot-badge">🔥 1v1 BATTLE</div>
+              <div class="mode-icon">🏁</div>
+              <div class="mode-title">RACE & COMBAT</div>
+              <div class="mode-subtitle">রেস ও শুটার ব্যাটেল</div>
+              <p class="mode-desc">Head-to-head lap race! Fire forward rockets [F], drop road spike mines [B], ram into each other & battle for 1st place!</p>
+              <div class="mode-tag">SELECT</div>
+            </div>
+          </div>
+        </div>
 
         <!-- Vehicle Selection Carousel -->
         <div class="selection-container">
@@ -235,6 +295,39 @@
             <button id="btn-pause-cam" class="btn-secondary">🎥 CAMERA VIEW</button>
             <button id="btn-service" class="btn-secondary">🛠️ FULL SERVICE (100% HP)</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1v1 Race Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+      <div class="countdown-panel">
+        <div id="countdown-subtext" class="countdown-subtext">DHAKA 1v1 BATTLE RACE</div>
+        <div id="countdown-number" class="countdown-number">3</div>
+        <div id="countdown-bangla" class="countdown-bangla">৩... ২... ১... ভাগো!</div>
+      </div>
+    </div>
+
+    <!-- Race Winner Celebration Modal -->
+    <div id="winner-modal" class="screen-modal hidden">
+      <div class="glass-panel winner-box">
+        <div class="badge-tag">RACE FINISHED • রেস সমাপ্ত</div>
+        <h1 id="winner-title" class="winner-title">🏆 VICTORY! 🏆</h1>
+        <h2 id="winner-name" class="winner-racer-name neon-gold">TANJILUR WINS!</h2>
+        <p id="winner-flavor" class="flavor-text">Dhaka Street Champion has been crowned!</p>
+        <div class="winner-stats-grid">
+          <div class="stat-cell">
+            <span class="cell-label">TOTAL TIME</span>
+            <span id="winner-time-val" class="cell-val neon-cyan">01:42</span>
+          </div>
+          <div class="stat-cell">
+            <span class="cell-label">LAPS COMPLETED</span>
+            <span class="cell-val">2 LAPS</span>
+          </div>
+        </div>
+        <div class="winner-actions">
+          <button id="btn-race-rematch" class="btn-primary-action pulse">🔄 REMATCH (আবার লড়াই শুরু)</button>
+          <button id="btn-race-freeroam" class="btn-secondary">🏙️ SWITCH TO OPEN WORLD</button>
         </div>
       </div>
     </div>

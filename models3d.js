@@ -633,6 +633,190 @@ const Models3D = {
     };
 
     return sprite;
+  },
+
+  // ==========================================
+  // 3D COMBAT: ROCKET PROJECTILE
+  // ==========================================
+  createRocketProjectile() {
+    this.initMaterials();
+    const group = new THREE.Group();
+
+    // Rocket body (fuselage cylinder)
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.6, roughness: 0.2 });
+    const bodyGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.4, 12);
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.rotation.x = Math.PI / 2; // point forward along Z
+    group.add(body);
+
+    // Glowing warhead tip
+    const noseMat = new THREE.MeshBasicMaterial({ color: 0xffea00 });
+    const noseGeo = new THREE.ConeGeometry(0.2, 0.5, 12);
+    const nose = new THREE.Mesh(noseGeo, noseMat);
+    nose.rotation.x = -Math.PI / 2;
+    nose.position.z = 0.95;
+    group.add(nose);
+
+    // 4 stabilizer tail fins
+    const finMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
+    const finGeo = new THREE.BoxGeometry(0.65, 0.05, 0.35);
+    const finH = new THREE.Mesh(finGeo, finMat);
+    finH.position.z = -0.55;
+    group.add(finH);
+
+    const finV = new THREE.Mesh(finGeo, finMat);
+    finV.rotation.z = Math.PI / 2;
+    finV.position.z = -0.55;
+    group.add(finV);
+
+    // Rear engine rocket thruster exhaust glow
+    const thrusterMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const thrusterGeo = new THREE.CylinderGeometry(0.12, 0.06, 0.2, 8);
+    const thruster = new THREE.Mesh(thrusterGeo, thrusterMat);
+    thruster.rotation.x = Math.PI / 2;
+    thruster.position.z = -0.75;
+    group.add(thruster);
+
+    return group;
+  },
+
+  // ==========================================
+  // 3D COMBAT: ROAD SPIKE MINE TRAP
+  // ==========================================
+  createSpikeTrap() {
+    this.initMaterials();
+    const group = new THREE.Group();
+
+    // Octagonal base disk
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.8, roughness: 0.3 });
+    const baseGeo = new THREE.CylinderGeometry(0.7, 0.75, 0.12, 8);
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.y = 0.06;
+    group.add(base);
+
+    // Sharp chrome spikes
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.1 });
+    const spikeGeo = new THREE.ConeGeometry(0.08, 0.45, 6);
+
+    const spikePositions = [
+      [0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45],
+      [0.32, 0.32], [-0.32, 0.32], [0.32, -0.32], [-0.32, -0.32]
+    ];
+
+    spikePositions.forEach(p => {
+      const sp = new THREE.Mesh(spikeGeo, spikeMat);
+      sp.position.set(p[0], 0.3, p[1]);
+      group.add(sp);
+    });
+
+    // Center warning pulsating beacon
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+    const beaconGeo = new THREE.SphereGeometry(0.2, 8, 8);
+    const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+    beacon.position.y = 0.22;
+    group.add(beacon);
+
+    group.beaconMesh = beacon;
+    return group;
+  },
+
+  // ==========================================
+  // 3D RACE: NEON CHECKPOINT ARCH GATE
+  // ==========================================
+  createCheckpointGate(title = 'CHECKPOINT', isFinish = false, gateWidth = 38) {
+    this.initMaterials();
+    const gateGroup = new THREE.Group();
+    const pillarHeight = 11;
+    const halfW = gateWidth / 2 + 1;
+
+    // Materials
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.3 });
+    const neonMat = new THREE.MeshBasicMaterial({ color: isFinish ? 0xffd700 : 0x00f0ff });
+    const laserMat = new THREE.MeshBasicMaterial({
+      color: isFinish ? 0xffc400 : 0x00e5ff,
+      transparent: true,
+      opacity: 0.28,
+      side: THREE.DoubleSide
+    });
+
+    // Left and Right Tower Pillars
+    const pillarGeo = new THREE.BoxGeometry(2.4, pillarHeight, 2.4);
+    const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    leftPillar.position.set(-halfW, pillarHeight / 2, 0);
+    gateGroup.add(leftPillar);
+
+    const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    rightPillar.position.set(halfW, pillarHeight / 2, 0);
+    gateGroup.add(rightPillar);
+
+    // Neon Accent rings on pillars
+    for (let h = 2; h < pillarHeight; h += 2.8) {
+      const ringGeo = new THREE.BoxGeometry(2.6, 0.25, 2.6);
+      const rL = new THREE.Mesh(ringGeo, neonMat);
+      rL.position.set(-halfW, h, 0);
+      gateGroup.add(rL);
+
+      const rR = new THREE.Mesh(ringGeo, neonMat);
+      rR.position.set(halfW, h, 0);
+      gateGroup.add(rR);
+    }
+
+    // Overhead Truss Crossbeam
+    const crossGeo = new THREE.BoxGeometry(gateWidth + 3, 2.2, 2.6);
+    const crossbeam = new THREE.Mesh(crossGeo, pillarMat);
+    crossbeam.position.set(0, pillarHeight + 0.8, 0);
+    gateGroup.add(crossbeam);
+
+    // Neon strip on top of crossbeam
+    const topStripGeo = new THREE.BoxGeometry(gateWidth + 3.2, 0.25, 2.8);
+    const topStrip = new THREE.Mesh(topStripGeo, neonMat);
+    topStrip.position.set(0, pillarHeight + 2.0, 0);
+    gateGroup.add(topStrip);
+
+    // Glowing Signboard Banner
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = isFinish ? '#4a154b' : '#041d38';
+    ctx.fillRect(0, 0, 512, 128);
+
+    ctx.strokeStyle = isFinish ? '#ffd700' : '#00f0ff';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(8, 8, 496, 112);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, 256, 56);
+
+    ctx.fillStyle = isFinish ? '#ffd700' : '#00e5ff';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(isFinish ? '🏁 START / FINISH LINE • রেস ফিনিশ 🏁' : '⚡ PASS THROUGH • চেকপয়েন্ট ⚡', 256, 96);
+
+    const bannerTex = new THREE.CanvasTexture(canvas);
+    const bannerMat = new THREE.MeshBasicMaterial({ map: bannerTex });
+    const bannerGeo = new THREE.PlaneGeometry(16, 3.8);
+
+    // Front & Back Banner
+    const bannerFront = new THREE.Mesh(bannerGeo, bannerMat);
+    bannerFront.position.set(0, pillarHeight + 0.8, 1.35);
+    gateGroup.add(bannerFront);
+
+    const bannerBack = new THREE.Mesh(bannerGeo, bannerMat);
+    bannerBack.rotation.y = Math.PI;
+    bannerBack.position.set(0, pillarHeight + 0.8, -1.35);
+    gateGroup.add(bannerBack);
+
+    // Translucent Laser Sensor Field Curtain
+    const laserGeo = new THREE.PlaneGeometry(gateWidth, pillarHeight);
+    const laserPlane = new THREE.Mesh(laserGeo, laserMat);
+    laserPlane.position.set(0, pillarHeight / 2, 0);
+    gateGroup.add(laserPlane);
+
+    gateGroup.laserMesh = laserPlane;
+    return gateGroup;
   }
 };
 

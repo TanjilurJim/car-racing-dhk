@@ -149,6 +149,7 @@ server.on('upgrade', (req, socket, head) => {
     angle: 0,
     speed: 0,
     carType: 'premio',
+    gameMode: 'OPEN_WORLD',
     health: 100,
     nitro: 100
   };
@@ -169,6 +170,7 @@ server.on('upgrade', (req, socket, head) => {
       z: p.z,
       angle: p.angle,
       carType: p.carType,
+      gameMode: p.gameMode,
       health: p.health
     }))
   });
@@ -183,6 +185,7 @@ server.on('upgrade', (req, socket, head) => {
       z: playerInfo.z,
       angle: 0,
       carType: playerInfo.carType,
+      gameMode: playerInfo.gameMode,
       health: 100
     }
   });
@@ -341,6 +344,117 @@ function handlePlayerMessage(senderSocket, msg) {
         name: p.name
       });
     }
+  } else if (msg.type === 'SET_PROFILE') {
+    if (msg.name && typeof msg.name === 'string') {
+      p.name = msg.name.trim().substring(0, 20);
+    }
+    if (msg.carType) p.carType = msg.carType;
+    if (msg.gameMode) p.gameMode = msg.gameMode;
+
+    console.log(`[LAN] Profile set: ${p.name} | Car: ${p.carType} | Mode: ${p.gameMode}`);
+
+    broadcast({
+      type: 'PLAYER_PROFILE_UPDATED',
+      id: p.id,
+      name: p.name,
+      carType: p.carType,
+      gameMode: p.gameMode
+    });
+
+    if (p.gameMode === 'RACE_COMBAT') {
+      checkAndTriggerRace();
+    }
+  } else if (msg.type === 'TRIGGER_RACE') {
+    checkAndTriggerRace(true);
+  } else if (msg.type === 'SHOOT_ROCKET') {
+    broadcastExcept(senderSocket, {
+      type: 'ROCKET_FIRED',
+      shooterId: p.id,
+      shooterName: p.name,
+      originX: msg.originX,
+      originY: msg.originY,
+      originZ: msg.originZ,
+      angle: msg.angle,
+      speed: msg.speed,
+      rocketId: msg.rocketId || ('rkt_' + Math.random().toString(36).substring(2, 7))
+    });
+  } else if (msg.type === 'DROP_MINE') {
+    broadcastExcept(senderSocket, {
+      type: 'MINE_DROPPED',
+      dropperId: p.id,
+      dropperName: p.name,
+      x: msg.x,
+      z: msg.z,
+      mineId: msg.mineId || ('mine_' + Math.random().toString(36).substring(2, 7))
+    });
+  } else if (msg.type === 'ROCKET_HIT') {
+    broadcast({
+      type: 'ROCKET_HIT_EVENT',
+      attackerId: p.id,
+      attackerName: p.name,
+      targetId: msg.targetId,
+      damage: msg.damage || 25,
+      impulse: msg.impulse || 35,
+      nx: msg.nx || 0,
+      nz: msg.nz || 1,
+      hitX: msg.hitX,
+      hitZ: msg.hitZ
+    });
+  } else if (msg.type === 'MINE_HIT') {
+    broadcast({
+      type: 'MINE_HIT_EVENT',
+      mineId: msg.mineId,
+      targetId: msg.targetId,
+      damage: msg.damage || 20,
+      x: msg.x,
+      z: msg.z
+    });
+  } else if (msg.type === 'CHECKPOINT_PASS') {
+    broadcast({
+      type: 'RACER_CHECKPOINT',
+      id: p.id,
+      name: p.name,
+      checkpointIndex: msg.checkpointIndex,
+      lap: msg.lap
+    });
+  } else if (msg.type === 'RACE_FINISHED') {
+    broadcast({
+      type: 'RACE_WINNER_ANNOUNCED',
+      winnerId: p.id,
+      winnerName: p.name,
+      finalTime: msg.finalTime
+    });
+  }
+}
+
+const GRID_SPOTS = [
+  { x: -120, z: 22, angle: 0 }, // Pole Position (Right lane, Northbound)
+  { x: -125, z: 16, angle: 0 }, // Position 2 (Left lane)
+  { x: -115, z: 10, angle: 0 }, // Position 3
+  { x: -122, z: 4, angle: 0 }   // Position 4
+];
+
+let lastRaceTriggerTime = 0;
+
+function checkAndTriggerRace(force = false) {
+  const raceRacers = Array.from(players.values()).filter(p => p.gameMode === 'RACE_COMBAT');
+  const now = Date.now();
+
+  // Need at least 2 racers (or force triggered) and cooldown 4s
+  if ((raceRacers.length >= 2 || (force && raceRacers.length >= 1)) && (now - lastRaceTriggerTime > 4000)) {
+    lastRaceTriggerTime = now;
+    console.log(`[LAN RACE] Triggering head-to-head race with ${raceRacers.length} racers!`);
+
+    broadcast({
+      type: 'RACE_COUNTDOWN_START',
+      racers: raceRacers.map((rp, idx) => ({
+        id: rp.id,
+        name: rp.name,
+        carType: rp.carType,
+        gridIndex: idx,
+        gridPos: GRID_SPOTS[idx % GRID_SPOTS.length]
+      }))
+    });
   }
 }
 

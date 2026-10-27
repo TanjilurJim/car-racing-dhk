@@ -844,3 +844,360 @@ input:checked + .slider:before {
   background: rgba(0, 240, 255, 0.2);
   border-color: var(--neon-cyan);
 }
+
+/* ==========================================
+   DRIVER PROFILE & MODE SELECTION UI
+   ========================================== */
+.driver-profile-card {
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.driver-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  margin-bottom: 6px;
+}
+
+.driver-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.driver-input {
+  flex-grow: 1;
+  background: rgba(3, 7, 18, 0.9);
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.driver-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.driver-badge {
+  background: rgba(0, 230, 118, 0.2);
+  border: 1px solid #00e676;
+  color: #00e676;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* Mode Selection Cards */
+.mode-select-section {
+  margin-bottom: 14px;
+}
+
+.mode-select-header {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--primary-gold);
+  margin-bottom: 8px;
+}
+
+.mode-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mode-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.mode-card:hover {
+  border-color: rgba(0, 240, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.mode-card.active {
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.4), rgba(15, 23, 42, 0.95));
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+.mode-card#mode-race-combat.active {
+  background: linear-gradient(135deg, rgba(190, 18, 60, 0.4), rgba(15, 23, 42, 0.95));
+  border-color: #f43f5e;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.4);
+}
+
+.mode-icon {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.mode-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.mode-subtitle {
+  font-family: 'Hind Siliguri', sans-serif;
+  font-size: 11px;
+  color: var(--primary-gold);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mode-desc {
+  font-size: 9.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+
+.mode-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.mode-card.active .mode-tag {
+  background: var(--neon-cyan);
+  color: #04101e;
+}
+
+.mode-card#mode-race-combat.active .mode-tag {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+.mode-hot-badge {
+  position: absolute;
+  top: -8px;
+  right: 6px;
+  background: linear-gradient(90deg, #f43f5e, #fbbf24);
+  color: #000;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.6);
+}
+
+/* ==========================================
+   1v1 RACE & COMBAT HUD
+   ========================================== */
+.race-box {
+  border-color: rgba(244, 63, 94, 0.6);
+  min-width: 140px;
+}
+
+.race-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.pos-badge {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.pos-1st {
+  background: rgba(250, 204, 21, 0.25);
+  border: 1px solid #facc15;
+  color: #facc15;
+}
+
+.pos-2nd {
+  background: rgba(148, 163, 184, 0.25);
+  border: 1px solid #cbd5e1;
+  color: #cbd5e1;
+}
+
+.race-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+/* Weapon HUD Bar */
+.weapon-box {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+}
+
+.weapon-action-btn {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.weapon-action-btn:active {
+  transform: scale(0.95);
+}
+
+.weapon-action-btn.rocket-btn {
+  border-color: rgba(239, 68, 68, 0.6);
+}
+.weapon-action-btn.rocket-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+}
+
+.weapon-action-btn.mine-btn {
+  border-color: rgba(234, 179, 8, 0.6);
+}
+.weapon-action-btn.mine-btn:hover {
+  background: rgba(234, 179, 8, 0.25);
+  border-color: #eab308;
+}
+
+.ammo-count {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--primary-gold);
+}
+
+/* Touch Combat Buttons */
+.fire-btn {
+  background: rgba(239, 68, 68, 0.35) !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.mine-btn {
+  background: rgba(234, 179, 8, 0.35) !important;
+  border-color: #eab308 !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================
+   COUNTDOWN & WINNER OVERLAYS
+   ========================================== */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 800;
+  pointer-events: none;
+}
+
+.countdown-panel {
+  text-align: center;
+  animation: countdownPulse 0.9s infinite ease-in-out;
+}
+
+.countdown-subtext {
+  font-size: clamp(14px, 3vw, 20px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--neon-cyan);
+  margin-bottom: 8px;
+}
+
+.countdown-number {
+  font-family: 'Bungee', 'Orbitron', sans-serif;
+  font-size: clamp(72px, 18vw, 140px);
+  font-weight: 900;
+  color: #ff0055;
+  text-shadow: 0 0 40px rgba(255, 0, 85, 0.8), 0 0 80px rgba(255, 200, 0, 0.6);
+  line-height: 1;
+}
+
+.countdown-bangla {
+  font-family: 'Hind Siliguri', sans-serif;
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 700;
+  color: #facc15;
+  margin-top: 10px;
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1.0); opacity: 0.9; }
+}
+
+/* Winner Celebration Modal */
+.winner-box {
+  max-width: 480px;
+  text-align: center;
+  border-color: rgba(250, 204, 21, 0.8);
+  box-shadow: 0 0 50px rgba(250, 204, 21, 0.4);
+}
+
+.winner-title {
+  font-size: clamp(24px, 5vw, 36px);
+  font-weight: 900;
+  color: var(--primary-gold);
+  margin-bottom: 4px;
+}
+
+.winner-racer-name {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.winner-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.winner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
